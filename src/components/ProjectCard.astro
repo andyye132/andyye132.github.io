@@ -1,0 +1,96 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  tech?: string[];
+  github?: string;
+  live?: string;
+}
+
+const { title, description, tech = [], github, live } = Astro.props;
+---
+
+<div class="project-card fade-in">
+  <h3 class="project-title">{title}</h3>
+  <p class="project-desc">{description}</p>
+
+  {tech.length > 0 && (
+    <div class="tech-stack">
+      {tech.map((t) => (
+        <span class="tech-tag">{t}</span>
+      ))}
+    </div>
+  )}
+
+  <div class="project-links">
+    {github && (
+      <a href={github} target="_blank" rel="noopener noreferrer">
+        github &rarr;
+      </a>
+    )}
+    {live && (
+      <a href={live} target="_blank" rel="noopener noreferrer">
+        live &rarr;
+      </a>
+    )}
+  </div>
+</div>
+
+<style>
+  .project-card {
+    background: var(--surface);
+    border: 1px solid #2a2a2a;
+    border-radius: 4px;
+    padding: 1.5rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .project-card:hover {
+    border-color: var(--accent);
+    background: var(--surface-hover);
+    box-shadow: var(--glow);
+  }
+
+  .project-title {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .project-desc {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+  }
+
+  .tech-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+  }
+
+  .tech-tag {
+    font-size: 0.7rem;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 0.1rem 0.45rem;
+    border-radius: 2px;
+    opacity: 0.7;
+  }
+
+  .project-links {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .project-links a {
+    color: var(--accent);
+    font-size: 0.85rem;
+    transition: text-shadow 0.2s ease;
+  }
+
+  .project-links a:hover {
+    text-shadow: var(--glow);
+  }
+</style>

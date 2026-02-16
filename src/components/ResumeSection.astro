@@ -1,0 +1,33 @@
+---
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<section class="resume-section fade-in">
+  <h2 class="resume-heading">
+    <span class="accent">#</span> {title}
+  </h2>
+  <div class="resume-content">
+    <slot />
+  </div>
+</section>
+
+<style>
+  .resume-section {
+    margin-bottom: 3rem;
+  }
+
+  .resume-heading {
+    font-size: 1.25rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #2a2a2a;
+  }
+
+  .resume-content {
+    padding-left: 0.5rem;
+  }
+</style>

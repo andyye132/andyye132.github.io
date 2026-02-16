@@ -1,0 +1,68 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <div class="links">
+      <a href="https://github.com/andye132" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+        github
+      </a>
+      <span class="sep">·</span>
+      <a href="https://linkedin.com/in/andy" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+        linkedin
+      </a>
+    </div>
+    <p class="copyright">&copy; {year} Andy. All rights reserved.</p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    border-top: 1px solid #2a2a2a;
+    padding: 2rem 0;
+    margin-top: 4rem;
+  }
+
+  .footer-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .links {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .links a {
+    color: var(--muted);
+    font-size: 0.85rem;
+    transition: color 0.2s ease;
+  }
+
+  .links a:hover {
+    color: var(--accent);
+  }
+
+  .sep {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .copyright {
+    color: var(--muted);
+    font-size: 0.8rem;
+    margin: 0;
+  }
+
+  @media (max-width: 768px) {
+    .footer-inner {
+      flex-direction: column;
+      text-align: center;
+    }
+  }
+</style>
