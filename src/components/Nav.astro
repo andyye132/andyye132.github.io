@@ -1,0 +1,153 @@
+---
+const navLinks = [
+  { href: '/site', label: 'about' },
+  { href: '/blog', label: 'creative' },
+  { href: '/projects', label: 'projects' },
+  { href: '/research', label: 'research' },
+  { href: '/resume', label: 'resume' },
+];
+
+const currentPath = Astro.url.pathname;
+
+// Build the terminal-style path: ~/andy on home, ~/andy/blog on /blog, etc.
+const segment = currentPath.replace(/\/$/, '').split('/').filter(Boolean)[0];
+const promptPath = segment ? `~/andy/${segment}` : '~/andy';
+---
+
+<nav class="nav">
+  <div class="nav-inner container">
+    <a href="/" class="brand">
+      <span class="prompt">{promptPath}</span> <span class="dollar">$</span>
+    </a>
+
+    <button class="menu-toggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
+
+    <ul class="nav-links">
+      {navLinks.map((link) => (
+        <li>
+          <a
+            href={link.href}
+            class:list={[{ active: currentPath.startsWith(link.href) }]}
+          >
+            {link.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</nav>
+
+<script>
+  const toggle = document.querySelector('.menu-toggle');
+  const links = document.querySelector('.nav-links');
+  const nav = document.querySelector('.nav');
+
+  toggle?.addEventListener('click', () => {
+    const expanded = toggle.getAttribute('aria-expanded') === 'true';
+    toggle.setAttribute('aria-expanded', String(!expanded));
+    links?.classList.toggle('open');
+  });
+
+</script>
+
+<style>
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    border-bottom: 1px solid #2a2a2a;
+    backdrop-filter: blur(10px);
+  }
+
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+  }
+
+  .brand {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--heading);
+    text-decoration: none;
+  }
+
+  .brand:hover {
+    text-shadow: none;
+  }
+
+  .prompt {
+    color: var(--accent);
+  }
+
+  .dollar {
+    color: var(--muted);
+  }
+
+  .nav-links {
+    display: flex;
+    list-style: none;
+    gap: 2rem;
+    padding: 0;
+    margin: 0;
+  }
+
+  .nav-links a {
+    color: var(--muted);
+    font-size: 0.9rem;
+    transition: color 0.2s ease, text-shadow 0.2s ease;
+  }
+
+  .nav-links a:hover,
+  .nav-links a.active {
+    color: var(--accent);
+    text-shadow: var(--glow);
+  }
+
+  .menu-toggle {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+  }
+
+  .bar {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: var(--text);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+
+  @media (max-width: 768px) {
+    .menu-toggle {
+      display: flex;
+    }
+
+    .nav-links {
+      display: none;
+      position: absolute;
+      top: 60px;
+      left: 0;
+      right: 0;
+      flex-direction: column;
+      background: var(--bg);
+      border-bottom: 1px solid #2a2a2a;
+      padding: 1rem 1.5rem;
+      gap: 1rem;
+    }
+
+    .nav-links.open {
+      display: flex;
+    }
+  }
+</style>
