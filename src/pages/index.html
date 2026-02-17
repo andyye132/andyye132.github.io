@@ -36,15 +36,6 @@
   #back-btn.visible { opacity: 1; pointer-events: all; }
   #back-btn:hover { background: #a8c7fa22; border-color: #a8c7fa; }
 
-  #regular-view-btn {
-    position: fixed; bottom: 28px; right: 24px; z-index: 6;
-    background: #0a0e14cc; border: 1px solid #a8c7fa66; color: #a8c7fa;
-    font-family: inherit; font-size: 11px; padding: 6px 20px;
-    cursor: pointer; text-decoration: none;
-    transition: background 0.2s, border-color 0.2s;
-    backdrop-filter: blur(4px);
-  }
-  #regular-view-btn:hover { background: #a8c7fa22; border-color: #a8c7fa; }
 
   #tooltip {
     position: fixed; pointer-events: none; z-index: 5;
@@ -202,7 +193,6 @@
 <div id="title-bar"><span id="title-path">~/andy-ye/base</span><span id="title-hint">click a section to explore</span></div>
 <div id="weather-hud"><div id="weather-time"></div><div id="weather-desc"></div></div>
 <button id="back-btn" onclick="goBack()">← back</button>
-<a id="regular-view-btn" href="/site">regular page view</a>
 <div id="tooltip"></div>
 <div id="overlay" onclick="closeInterior()"></div>
 <div id="interior"></div>
@@ -2264,15 +2254,17 @@ function showFeatured(){
 function showAbout(){
   const el=document.getElementById('interior');
   const zc=el.style.getPropertyValue('--zone-color')||'#c8e0a0';
-  el.innerHTML=`<h2>> about me</h2><button class="close-btn" onclick="closeInterior()">\u00d7 close</button>
+  el.innerHTML=`<h2>> andy ye</h2><button class="close-btn" onclick="closeInterior()">\u00d7 close</button>
 
     <div class="item">
-      <p style="color:#999;font-size:.78rem;line-height:1.7;margin-bottom:.5rem;">I am mentored by <a href="https://lichard49.github.io" target="_blank" style="color:${zc};text-decoration:underline;text-underline-offset:2px;">Matt Wallingford</a> and <a href="https://lichard49.github.io" target="_blank" style="color:${zc};text-decoration:underline;text-underline-offset:2px;">Richard Li</a>.</p>
-    </div>
-
-    <div class="item">
-      <h3>Hey, I\u2019m Andy</h3>
-      <p>I\u2019m a CS undergraduate at the University of Washington, Seattle. I build things at the intersection of machine learning, computer vision, and human-computer interaction. I also write essays about psychology, identity, and how people think.</p>
+      <h3>About Me</h3>
+      <div style="display:flex;gap:1.2rem;align-items:flex-start;">
+        <img src="/aboutme.jpg" alt="Andy Ye" style="width:140px;height:auto;border:1px solid #252a38;flex-shrink:0;object-fit:cover;" />
+        <div>
+          <p>I\u2019m a undergraduate studying Computer Science at the University of Washington, Seattle. I work in the intersection of machine learning, computer vision, and human-computer interaction, mentored by <a href="https://mattwallingford.github.io/" target="_blank" style="color:${zc};text-decoration:underline;text-underline-offset:2px;">Matt Wallingford</a> (at <a href="https://allenai.org/" target="_blank" style="color:${zc};text-decoration:underline;text-underline-offset:2px;">Ai2</a>) and <a href="https://lichard49.github.io" target="_blank" style="color:${zc};text-decoration:underline;text-underline-offset:2px;">Richard Li</a> (at <a href="https://ubicomplab.cs.washington.edu/" target="_blank" style="color:${zc};text-decoration:underline;text-underline-offset:2px;">UbiComp Lab</a>).</p>
+          <p style="margin-top:.5rem;">I enjoy writing essays on psychology, media analysis, and narcissism. I also oil paint and play the piano, and have recently begun composing some pieces. I love plants versus zombies. I\u2019ve designed many different board games, pdf sheets of which will be uploaded shortly.</p>
+        </div>
+      </div>
     </div>
 
     <div class="item">
