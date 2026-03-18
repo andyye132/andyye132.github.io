@@ -57,34 +57,35 @@
     position: fixed; top: 50%; left: 50%;
     transform: translate(-50%,-50%) scale(0.85); opacity: 0;
     pointer-events: none; z-index: 11;
-    transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1), opacity 0.35s;
-    width: 92%; max-width: 800px; max-height: 88vh; overflow-y: auto;
+    width: 92%; max-width: 900px; max-height: 88vh; overflow-y: auto;
     background: #131820; border: 2px solid var(--zone-color, #a8c7fa);
     box-shadow: 0 0 40px rgba(168,199,250,0.12); padding: 1.8rem;
+    transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1), opacity 0.35s, max-width 0.35s ease;
   }
   #interior.active { transform: translate(-50%,-50%) scale(1); opacity: 1; pointer-events: all; }
-  #interior h2 { color: var(--zone-color, #a8c7fa); font-size: 1.1rem; margin-bottom: 1rem; }
+  #interior.reading { max-width: 1100px; }
+  #interior h2 { color: var(--zone-color, #a8c7fa); font-size: 1.3rem; margin-bottom: 1rem; }
   #interior .close-btn {
     position: absolute; top: 1rem; right: 1rem;
     background: none; border: 1px solid var(--zone-color, #a8c7fa); color: var(--zone-color, #a8c7fa);
-    font-family: inherit; font-size: 0.75rem; padding: 4px 10px;
+    font-family: inherit; font-size: 0.8rem; padding: 4px 10px;
     cursor: pointer; transition: background 0.2s, color 0.2s;
   }
   #interior .close-btn:hover { background: var(--zone-color, #a8c7fa); color: #0a0e14; }
-  .item { background: #1a1f2a; border: 1px solid #252a38; padding: 0.9rem; margin-bottom: 0.6rem; transition: border-color 0.2s; }
+  .item { background: #1a1f2a; border: 1px solid #252a38; padding: 1rem; margin-bottom: 0.7rem; transition: border-color 0.2s; }
   .item:hover { border-color: var(--zone-color, #a8c7fa); }
-  .item h3 { color: #fff; font-size: 0.85rem; margin-bottom: 0.25rem; }
-  .item p { color: #666; font-size: 0.75rem; line-height: 1.5; margin: 0; }
-  .item .tag { display: inline-block; font-size: 0.6rem; color: var(--zone-color, #a8c7fa); border: 1px solid color-mix(in srgb, var(--zone-color, #a8c7fa) 25%, transparent); padding: 1px 5px; margin-right: 3px; margin-top: 5px; }
-  .item .date { color: #444; font-size: 0.65rem; margin-top: 5px; }
+  .item h3 { color: #fff; font-size: 1rem; margin-bottom: 0.3rem; }
+  .item p { color: #666; font-size: 0.85rem; line-height: 1.5; margin: 0; }
+  .item .tag { display: inline-block; font-size: 0.7rem; color: var(--zone-color, #a8c7fa); border: 1px solid color-mix(in srgb, var(--zone-color, #a8c7fa) 25%, transparent); padding: 1px 5px; margin-right: 3px; margin-top: 5px; }
+  .item .date { color: #444; font-size: 0.75rem; margin-top: 5px; }
   .archive-thumb { width: 72px; height: 72px; object-fit: cover; border: 1px solid #252a38; flex-shrink: 0; }
-  .post-banner { width: 100%; height: 180px; object-fit: cover; border: 1px solid #252a38; margin-bottom: 1rem; }
-  .post-body h2 { color: var(--zone-color, #a8c7fa); font-size: .95rem; margin-top: 1.5rem; margin-bottom: .5rem; }
-  .post-body h3 { color: #ccc; font-size: .85rem; margin-top: 1.2rem; margin-bottom: .4rem; }
-  .post-body p { color: #bbb; font-size: .8rem; line-height: 1.8; margin-bottom: .8rem; }
+  .post-banner { width: 100%; height: 220px; object-fit: cover; border: 1px solid #252a38; margin-bottom: 1rem; }
+  .post-body h2 { color: var(--zone-color, #a8c7fa); font-size: 1.2rem; margin-top: 1.5rem; margin-bottom: .5rem; }
+  .post-body h3 { color: #ccc; font-size: 1.05rem; margin-top: 1.2rem; margin-bottom: .4rem; }
+  .post-body p { color: #bbb; font-size: 1rem; line-height: 1.9; margin-bottom: 1rem; }
   .post-body a { color: var(--zone-color, #a8c7fa); text-decoration: underline; text-underline-offset: 2px; }
-  .post-body blockquote { border-left: 2px solid var(--zone-color, #a8c7fa); padding-left: .8rem; color: #888; margin: 1rem 0; }
-  .post-body ul, .post-body ol { color: #bbb; font-size: .8rem; margin-bottom: .8rem; padding-left: 1.2rem; }
+  .post-body blockquote { border-left: 2px solid var(--zone-color, #a8c7fa); padding-left: 1rem; color: #999; font-size: 1rem; line-height: 1.8; margin: 1.2rem 0; }
+  .post-body ul, .post-body ol { color: #bbb; font-size: 1rem; margin-bottom: 1rem; padding-left: 1.4rem; line-height: 1.8; }
   .interior-tabs { display: flex; gap: 0; margin-bottom: 1rem; border-bottom: 1px solid #252a38; }
   .interior-tabs button {
     background: none; border: none; border-bottom: 2px solid transparent;
@@ -2177,6 +2178,7 @@ function showInterior(b){
 function showArchive(){
   inArchivePost=false;
   const el=document.getElementById('interior');
+  el.classList.remove('reading');
   let h='<h2>> archive — all posts</h2><button class="close-btn" onclick="closeInterior()">\u00d7 close</button>';
   if(blogPosts.length===0){
     h+='<div class="item"><p>no posts yet.</p></div>';
@@ -2204,20 +2206,21 @@ let inArchivePost=false;
 window.showPost=function(slug){
   inArchivePost=true;
   const el=document.getElementById('interior');
+  el.classList.add('reading');
   const post=blogPosts.find(p=>p.slug===slug);
   if(!post)return;
   const d=new Date(post.date);
   const ds=d.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
   const img=post.image?`<img src="${post.image}" class="post-banner" />`:'';
   el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start;">
-    <a onclick="showArchive()" style="color:#666;font-size:.75rem;cursor:pointer;margin-bottom:1rem;display:inline-block;">&larr; back to archive</a>
+    <a onclick="showArchive()" style="color:#666;font-size:.85rem;cursor:pointer;margin-bottom:1rem;display:inline-block;">&larr; back to archive</a>
     <button class="close-btn" onclick="showArchive()">\u00d7 close</button>
   </div>
   ${img}
   <h2>> ${post.title}</h2>
-  <div class="date" style="color:#666;font-size:.7rem;margin-bottom:.5rem;">${ds}</div>
+  <div class="date" style="color:#666;font-size:.85rem;margin-bottom:.5rem;">${ds}</div>
   ${post.tags.map(t=>'<span class="tag">'+t+'</span>').join(', ')}
-  <div class="post-body" style="margin-top:1rem;color:#bbb;font-size:.8rem;line-height:1.8;"><p>loading...</p></div>`;
+  <div class="post-body" style="margin-top:1.2rem;"><p>loading...</p></div>`;
   el.scrollTop=0;
   fetch('/blog/'+slug).then(r=>r.text()).then(html=>{
     const doc=new DOMParser().parseFromString(html,'text/html');
@@ -2228,6 +2231,7 @@ window.showPost=function(slug){
 
 function showFeatured(){
   const el=document.getElementById('interior');
+  el.classList.add('reading');
   const post=blogPosts[0];
   if(!post){
     el.innerHTML='<h2>> latest post</h2><button class="close-btn" onclick="closeInterior()">\u00d7 close</button><div class="item"><p>no posts yet.</p></div>';
@@ -2239,9 +2243,9 @@ function showFeatured(){
   const img=post.image?`<img src="${post.image}" class="post-banner" />`:'';
   el.innerHTML=`<h2>> ${post.title}</h2><button class="close-btn" onclick="closeInterior()">\u00d7 close</button>
     ${img}
-    <div class="date" style="color:#666;font-size:.7rem;margin-bottom:.5rem;">${ds}</div>
+    <div class="date" style="color:#666;font-size:.85rem;margin-bottom:.5rem;">${ds}</div>
     ${post.tags.map(t=>'<span class="tag">'+t+'</span>').join(', ')}
-    <div class="post-body" style="margin-top:1rem;color:#bbb;font-size:.8rem;line-height:1.8;"><p>loading...</p></div>`;
+    <div class="post-body" style="margin-top:1.2rem;"><p>loading...</p></div>`;
   setTimeout(()=>el.classList.add('active'),50);
   fetch('/blog/'+post.slug).then(r=>r.text()).then(html=>{
     const doc=new DOMParser().parseFromString(html,'text/html');
@@ -2390,7 +2394,7 @@ function showAi2(){
   const el=document.getElementById('interior');
   el.innerHTML=`<h2>> Allen Institute for AI</h2>
     <button class="close-btn" onclick="closeInterior()">\u00d7 close</button>
-    <p style="color:#999;font-size:.75rem;margin-bottom:.2rem;">with <a href="https://lichard49.github.io" target="_blank" style="color:var(--zone-color);text-decoration:underline;text-underline-offset:2px;">Matt Wallingford</a></p>
+    <p style="color:#999;font-size:.75rem;margin-bottom:.2rem;">with <a href="https://mattwallingford.github.io/" target="_blank" style="color:var(--zone-color);text-decoration:underline;text-underline-offset:2px;">Matt Wallingford</a></p>
     <p style="color:#555;font-size:.65rem;margin-bottom:1rem;">Oct 2025 — Present</p>
     <div class="interior-tabs">
       <button class="active" onclick="showBristleTab()">bristle</button>
@@ -2413,7 +2417,7 @@ window.showBristleTab=function(){
       <p style="margin-bottom:.7rem;">Fourth, I implemented floor-point detection via ray-casting. For each trajectory, the algorithm shoots a ray downward from the endpoint camera position and identifies the floor plane by detecting point cloud density within a cylindrical region, extracting walkable destination coordinates for navigation targets.</p>
       <p style="margin-bottom:.7rem;">The resulting dataset provides real-world navigation trajectories with ground-truth depth and camera poses, which will help ground robotic navigation with reality. The pipeline is designed to scale, and we are currently working on adapting it to POV videos in general, so that robots can reliably move outside.</p>
     </div>
-    <a href="/bristle" target="_blank" class="dl-link" style="margin-top:.8rem;">demo at andyye.bio/bristle &rarr;</a>
+    <a href="https://andyye.bio/bristle/" target="_blank" class="dl-link" style="margin-top:.8rem;">demo at andyye.bio/bristle &rarr;</a>
     <div style="margin-top:.6rem;">
       <span class="tag">Python</span><span class="tag">SLURM</span><span class="tag">VGGT</span><span class="tag">PySceneDetect</span>
     </div>`;
@@ -2461,7 +2465,7 @@ function showTranscripts(){
 
 window.closeInterior=function(){
   inArchivePost=false;
-  document.getElementById('interior').classList.remove('active');
+  document.getElementById('interior').classList.remove('active','reading');
   document.getElementById('overlay').classList.remove('active');
   const wasInfo=activeZone==='info';
   setTimeout(()=>{
