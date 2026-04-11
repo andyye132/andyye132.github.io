@@ -56,8 +56,9 @@
   .game-images img {
     height: 280px; width: auto; border-radius: 4px;
     border: 1px solid #d8d0c8; cursor: pointer;
-    transition: transform 0.3s;
+    opacity: 0; transition: opacity 0.6s ease, transform 0.3s;
   }
+  .game-images img.loaded { opacity: 1; }
   .game-images img:hover { transform: scale(1.02); }
 
   /* Lightbox */
@@ -138,6 +139,10 @@
 function openLB(img){ document.getElementById('lb-img').src=img.src; document.getElementById('lightbox').classList.add('active'); }
 function closeLB(){ document.getElementById('lightbox').classList.remove('active'); }
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeLB(); });
+document.querySelectorAll('.game-images img').forEach(img=>{
+  if(img.complete) img.classList.add('loaded');
+  else img.addEventListener('load', ()=> img.classList.add('loaded'));
+});
 </script>
 </body>
 </html>
