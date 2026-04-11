@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creative — Andy Ye</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=JetBrains+Mono:wght@400;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a0a; font-family: 'JetBrains Mono', monospace; color: #f6f1ee; overflow-x: hidden; }
+
+  /* Nav */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding: 0 2rem; height: 48px;
+    background: transparent;
+    transition: background 0.3s;
+  }
+  nav a { font-size: 0.78rem; color: #f6f1ee; font-weight: 700; padding: 14px 16px; text-decoration: none; transition: color 0.2s; }
+  nav a:hover { color: #4a9a9a; }
+
+  /* Full-screen hero */
+  .hero {
+    position: relative; width: 100%; height: 100vh;
+    overflow: hidden;
+  }
+  .hero-img {
+    position: absolute; inset: 0;
+    background: url('/art/cover_real.jpg') center center / cover no-repeat;
+    transform: scale(1.05);
+    transition: transform 8s ease-out;
+  }
+  .hero.loaded .hero-img { transform: scale(1); }
+  .hero-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.15) 0%,
+      rgba(0,0,0,0.3) 40%,
+      rgba(0,0,0,0.7) 100%
+    );
+  }
+
+  /* Hero content */
+  .hero-content {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 0 3rem 4rem;
+    z-index: 2;
+  }
+  .hero-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 4.5rem; font-weight: 900; font-style: italic;
+    color: #f6f1ee; letter-spacing: -2px;
+    margin-bottom: 2rem;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.4);
+  }
+
+  /* Three options */
+  .options { display: flex; gap: 1.5rem; }
+  .option {
+    flex: 1; padding: 1.5rem;
+    border: 1px solid rgba(246,241,238,0.2);
+    border-radius: 4px;
+    text-decoration: none; color: #f6f1ee;
+    backdrop-filter: blur(8px);
+    background: rgba(246,241,238,0.05);
+    transition: border-color 0.3s, background 0.3s, transform 0.3s;
+  }
+  .option:hover {
+    border-color: #4a9a9a;
+    background: rgba(74,154,154,0.12);
+    transform: translateY(-3px);
+  }
+  .option h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.2rem; font-weight: 700; margin-bottom: 0.3rem;
+  }
+  .option p {
+    font-size: 0.7rem; color: rgba(246,241,238,0.6); line-height: 1.6;
+  }
+
+  /* Asterisk */
+  .asterisk {
+    position: absolute; bottom: 12px; right: 20px; z-index: 2;
+    font-size: 0.55rem; color: rgba(246,241,238,0.35);
+    max-width: 400px; text-align: right; line-height: 1.5;
+  }
+  .asterisk a { color: rgba(246,241,238,0.5); text-decoration: underline; text-underline-offset: 2px; }
+
+  @media (max-width: 700px) {
+    .hero-title { font-size: 2.8rem; }
+    .options { flex-direction: column; gap: 0.8rem; }
+    .hero-content { padding: 0 1.5rem 3rem; }
+    .asterisk { max-width: 260px; font-size: 0.5rem; }
+  }
+</style>
+</head>
+<body>
+<nav>
+  <a href="/">home</a>
+  <a href="/Pages/Materials/Resume_Feb_7.pdf" target="_blank">cv</a>
+  <a href="/blog-archive">blog</a>
+  <a href="/creative" style="color:#4a9a9a;">portfolio</a>
+</nav>
+
+<div class="hero" id="hero">
+  <div class="hero-img"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-title">creative</div>
+    <div class="options">
+      <a href="/creative/art" class="option"><h2>oil painting</h2></a>
+      <a href="/creative/music" class="option"><h2>music</h2></a>
+      <a href="/creative/games" class="option"><h2>card games</h2></a>
+    </div>
+  </div>
+  <div class="asterisk">* this is my attempt at drawing and modifying the beautiful <em>Shared Summons</em> MTG card by <a href="https://www.aaronbmiller.com/" target="_blank">Aaron Miller</a>.</div>
+</div>
+
+<script>
+// Slow zoom-out on load
+requestAnimationFrame(()=> document.getElementById('hero').classList.add('loaded'));
+</script>
+</body>
+</html>

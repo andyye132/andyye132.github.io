@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oil Painting — Andy Ye</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #f6f1ee; font-family: 'JetBrains Mono', monospace; color: #2a2a2a;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 31px, rgba(190,182,174,0.12) 31px, rgba(190,182,174,0.12) 32px);
+    background-size: 100% 32px;
+  }
+  nav {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding: 0 2rem; height: 48px;
+    background: rgba(246,241,238,0.65); backdrop-filter: blur(12px);
+  }
+  nav a { font-size: 0.78rem; color: #4a9a9a; padding: 14px 16px; text-decoration: none; transition: color 0.2s; }
+  nav a:hover { color: #2a7a7a; }
+  .main { max-width: 1200px; margin: 0 auto; padding: 2rem 2rem 6rem; }
+  h1 { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.3rem; }
+  .back { font-size: 0.75rem; color: #4a9a9a; text-decoration: none; display: inline-block; margin-bottom: 1.5rem; }
+  .back:hover { color: #2a7a7a; }
+  .note { font-size: 0.72rem; color: #999; font-style: italic; margin-bottom: 2rem; line-height: 1.6; }
+
+  /* Masonry grid */
+  .masonry {
+    columns: 3;
+    column-gap: 10px;
+  }
+  .masonry-item {
+    break-inside: avoid;
+    margin-bottom: 10px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .masonry-item img {
+    width: 100%; display: block;
+    transition: transform 0.4s ease;
+  }
+  .masonry-item:hover img {
+    transform: scale(1.03);
+  }
+  .masonry-item .caption {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 8px 12px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.55));
+    color: #fff; font-size: 0.7rem; font-weight: 700;
+    opacity: 0; transition: opacity 0.3s;
+    letter-spacing: 0.3px;
+  }
+  .masonry-item:hover .caption { opacity: 1; }
+
+  /* Lightbox */
+  #lightbox {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,0.88);
+    display: none; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  #lightbox.active { display: flex; }
+  #lightbox img {
+    max-width: 90vw; max-height: 90vh; object-fit: contain;
+    border-radius: 4px;
+  }
+  #lightbox .lb-caption {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    color: rgba(255,255,255,0.7); font-size: 0.75rem; letter-spacing: 0.5px;
+  }
+
+  @media (max-width: 900px) { .masonry { columns: 2; } }
+  @media (max-width: 500px) { .masonry { columns: 1; } .main { padding: 1.5rem 1rem 4rem; } }
+</style>
+</head>
+<body>
+<nav>
+  <a href="/">home</a>
+  <a href="/Pages/Materials/Resume_Feb_7.pdf" target="_blank">cv</a>
+  <a href="/blog-archive">blog</a>
+  <a href="/creative" style="color:#2a2a2a;">portfolio</a>
+</nav>
+<div class="main">
+  <a href="/creative" class="back">&larr; back to creative</a>
+  <h1># oil painting</h1>
+  <p class="note">* this was my last gallery before finishing high school. better images of art to come... at some point.</p>
+
+  <div class="masonry">
+    <div class="masonry-item" onclick="openLB(this)"><img src="/art/Landscape/shuksan.jpg" alt="shuksan" loading="lazy"><div class="caption">shuksan</div></div>
+    <div class="masonry-item" onclick="openLB(this)"><img src="/art/Everything Else/cycles.jpg" alt="cycles" loading="lazy"><div class="caption">cycles</div></div>
+    <div class="masonry-item" onclick="openLB(this)"><img src="/art/Boats 2/sunburnt.jpg" alt="sunburnt" loading="lazy"><div class="caption">sunburnt</div></div>
+    <div class="masonry-item" onclick="openLB(this)"><img src="/art/Landscape/midas.jpg" alt="midas" loading="lazy"><div class="caption">midas</div></div>
+    <div class="masonry-item" onclick="openLB(this)"><img src="/art/Landscape/haystack.jpg" alt="haystack" loading="lazy"><div class="caption">haystack</div></div>
+    <div class="masonry-item" onclick="openLB(this)"><img src="/art/Everything Else/zookeeper.jpg" alt="zookeeper" loading="lazy"><div class="caption">zookeeper</div></div>
+    <div class="masonry-item" onclick="openLB(this)"><img src="/art/Boats 2/nautilus.jpg" alt="nautilus" loading="lazy"><div class="caption">nautilus</div></div>
+    <div class="masonry-item" onclick="openLB(this)"><img src="/art/Landscape/monet mimicry.jpg" alt="monet mimicry" loading="lazy"><div class="caption">monet mimicry</div></div>
+    <div class="masonry-item" onclick="openLB(this)"><img src="/art/Landscape/canopy.jpg" alt="canopy" loading="lazy"><div class="caption">canopy</div></div>
+    <div class="masonry-item" onclick="openLB(this)"><img src="/art/Landscape/at the toes of titans.jpg" alt="at the toes of titans" loading="lazy"><div class="caption">at the toes of titans</div></div>
+    <div class="masonry-item" onclick="openLB(this)"><img src="/art/Boats 2/godspeed.jpg" alt="godspeed" loading="lazy"><div class="caption">godspeed</div></div>
+    <div class="masonry-item" onclick="openLB(this)"><img src="/art/Everything Else/eruption.jpg" alt="eruption" loading="lazy"><div class="caption">eruption</div></div>
+    <div class="masonry-item" onclick="openLB(this)"><img src="/art/Landscape/steambug.jpg" alt="steambug" loading="lazy"><div class="caption">steambug</div></div>
+    <div class="masonry-item" onclick="openLB(this)"><img src="/art/Boats 2/seagull.jpg" alt="seagull" loading="lazy"><div class="caption">seagull</div></div>
+    <div class="masonry-item" onclick="openLB(this)"><img src="/art/Landscape/reflections.jpg" alt="reflections" loading="lazy"><div class="caption">reflections</div></div>
+    <div class="masonry-item" onclick="openLB(this)"><img src="/art/Boats 2/lagoon.jpg" alt="lagoon" loading="lazy"><div class="caption">lagoon</div></div>
+    <div class="masonry-item" onclick="openLB(this)"><img src="/art/Everything Else/20th anniversary.jpg" alt="20th anniversary" loading="lazy"><div class="caption">20th anniversary</div></div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox" onclick="closeLB()">
+  <img id="lb-img" src="" alt="">
+  <div class="lb-caption" id="lb-cap"></div>
+</div>
+
+<script>
+function openLB(el){
+  const img = el.querySelector('img');
+  const cap = el.querySelector('.caption');
+  document.getElementById('lb-img').src = img.src;
+  document.getElementById('lb-cap').textContent = cap ? cap.textContent : '';
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLB(){
+  document.getElementById('lightbox').classList.remove('active');
+}
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeLB(); });
+</script>
+</body>
+</html>

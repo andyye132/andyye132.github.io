@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research — Andy Ye</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #f6f1ee; font-family: 'JetBrains Mono', monospace; color: #2a2a2a;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 31px, rgba(190,182,174,0.12) 31px, rgba(190,182,174,0.12) 32px);
+    background-size: 100% 32px;
+  }
+  nav {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding: 0 2rem; height: 48px;
+    background: rgba(246,241,238,0.65); backdrop-filter: blur(12px);
+  }
+  nav a {
+    font-size: 0.78rem; color: #4a9a9a; padding: 14px 16px; text-decoration: none;
+    transition: color 0.2s;
+  }
+  nav a:hover { color: #2a7a7a; }
+  .main { max-width: 820px; margin: 0 auto; padding: 3rem 2rem 6rem; }
+  h1 { font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem; }
+  h2 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.4rem; }
+  h3 { font-size: 0.78rem; font-weight: 700; margin-top: 0.6rem; margin-bottom: 0.4rem; }
+  p { font-size: 0.8rem; color: #555; line-height: 1.8; margin-bottom: 0.8rem; }
+  a { color: #4a9a9a; text-decoration: underline; text-underline-offset: 2px; }
+  .card {
+    background: #ede7e1; border: 1px solid #d8d0c8; border-radius: 4px;
+    padding: 1rem 1.2rem; margin-bottom: 1.2rem;
+  }
+  .meta { font-size: 0.7rem; color: #999; margin-bottom: 0.5rem; }
+  .tag {
+    display: inline-block; font-size: 0.65rem; color: #4a9a9a;
+    border: 1px solid rgba(74,154,154,0.3); padding: 1px 6px; margin-right: 4px; margin-top: 4px; border-radius: 2px;
+  }
+  .dl {
+    display: inline-block; font-size: 0.75rem; padding: 5px 14px;
+    border: 1px solid #4a9a9a; color: #4a9a9a; text-decoration: none;
+    transition: background 0.2s, color 0.2s; border-radius: 3px; margin-top: 0.6rem;
+  }
+  .dl:hover { background: #4a9a9a; color: #f6f1ee; }
+</style>
+</head>
+<body>
+<nav>
+  <a href="/">home</a>
+  <a href="/Pages/Materials/Resume_Feb_7.pdf" target="_blank">cv</a>
+  <a href="/research" style="color:#2a2a2a;">research</a>
+  <a href="/blog-archive">blog</a>
+  <a href="/creative">portfolio</a>
+</nav>
+<div class="main">
+  <h1># research</h1>
+
+  <div class="card">
+    <h2>Allen Institute for AI (Ai2)</h2>
+    <div class="meta">with <a href="https://mattwallingford.github.io/" target="_blank">Matt Wallingford</a> · Oct 2025 — Present</div>
+    <h3>Bristle: A Filtering Pipeline for Real Life Household CV Navigation</h3>
+    <p>Current real-world robotic navigation models rely on simulated data because high-quality, well-formatted real data is sparse. My project addresses this gap by building an automated pipeline to convert real estate walkthrough videos into training data for embodied AI navigation.</p>
+    <p>The pipeline currently processes RealEstate10K, a dataset of 10,000 house tour videos, into 125,000+ streamlined clips with associated camera trajectories and depth maps. First, raw videos are segmented into clips using PySceneDetect, detecting transitions and ensuring each clip contains continuous camera movement.</p>
+    <p>Each clip is processed through VGGT (Visual Geometry Grounded Transformer) to extract 3D reconstruction data, including per-frame depth maps and camera extrinsics.</p>
+    <p>I developed a trajectory extraction algorithm that identifies navigable camera paths for each clip. The algorithm selects potential destination frames, then verifies that the destination point remains visible throughout the trajectory by projecting it into each frame and checking for occlusion using depth maps. The longest continuous segment where the destination stays in view becomes the extracted trajectory.</p>
+    <p>I implemented floor-point detection via ray-casting. For each trajectory, the algorithm shoots a ray downward from the endpoint camera position and identifies the floor plane by detecting point cloud density within a cylindrical region, extracting walkable destination coordinates for navigation targets.</p>
+    <p>The resulting dataset provides real-world navigation trajectories with ground-truth depth and camera poses, which will help ground robotic navigation with reality.</p>
+    <div><span class="tag">Python</span><span class="tag">SLURM</span><span class="tag">VGGT</span><span class="tag">PySceneDetect</span></div>
+    <a href="https://andyye.bio/bristle/" target="_blank" class="dl">demo at andyye.bio/bristle →</a>
+  </div>
+
+  <div class="card">
+    <h2>Ubiquitous Computing Lab (UW CSE)</h2>
+    <div class="meta">with <a href="https://lichard49.github.io" target="_blank">Richard Li</a> · Oct 2025 — Present</div>
+    <h3>Bernoulli LSE for Efficient CFF Detection with Beacon</h3>
+    <p>BEACON is a mobile health diagnostic tool for measuring Critical Flicker Frequency (CFF) thresholds. I work on Bernoulli Level Set Estimation with Gaussian Processes to efficiently detect CFF thresholds, reducing patient trials from 40–120 down to 20–30 while maintaining diagnostic accuracy.</p>
+    <p>Evaluated EAVC, GlobalMI, LocalMI acquisition functions and built person-specific Oracles for adaptive threshold estimation.</p>
+    <div><span class="tag">Python</span><span class="tag">Gaussian Processes</span><span class="tag">Psychophysics</span></div>
+  </div>
+</div>
+</body>
+</html>

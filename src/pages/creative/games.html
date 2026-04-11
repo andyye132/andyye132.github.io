@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Card Games — Andy Ye</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=JetBrains+Mono:wght@400;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #f6f1ee; font-family: 'JetBrains Mono', monospace; color: #2a2a2a;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 31px, rgba(190,182,174,0.12) 31px, rgba(190,182,174,0.12) 32px);
+    background-size: 100% 32px;
+  }
+  ::selection { background: #4a9a9a; color: #fff; }
+  nav {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding: 0 2rem; height: 48px;
+    background: rgba(246,241,238,0.65); backdrop-filter: blur(12px);
+  }
+  nav a { font-size: 0.78rem; color: #4a9a9a; padding: 14px 16px; text-decoration: none; transition: color 0.2s; font-weight: 700; }
+  nav a:hover { color: #2a7a7a; }
+  .main { max-width: 1000px; margin: 0 auto; padding: 2rem 2rem 6rem; }
+  h1 { font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem; }
+  .back { font-size: 0.75rem; color: #4a9a9a; text-decoration: none; display: inline-block; margin-bottom: 1.5rem; }
+  .back:hover { color: #2a7a7a; }
+
+  .game-row {
+    margin-bottom: 2.5rem;
+    border-bottom: 1px solid #d8d0c8;
+    padding-bottom: 2rem;
+  }
+  .game-row:last-child { border-bottom: none; }
+  .game-header {
+    display: flex; align-items: baseline; gap: 1rem; margin-bottom: 0.4rem;
+  }
+  .game-header h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.4rem; font-weight: 900;
+  }
+  .game-header .game-date { font-size: 0.7rem; color: #999; }
+  .game-links {
+    display: flex; gap: 0.6rem; margin-bottom: 1rem;
+  }
+  .game-links a {
+    font-size: 0.7rem; color: #4a9a9a; text-decoration: none;
+    border: 1px solid #4a9a9a; padding: 3px 10px; border-radius: 3px;
+    transition: background 0.2s, color 0.2s;
+  }
+  .game-links a:hover { background: #4a9a9a; color: #f6f1ee; }
+  .game-images {
+    display: flex; gap: 10px; flex-wrap: wrap;
+  }
+  .game-images img {
+    height: 280px; width: auto; border-radius: 4px;
+    border: 1px solid #d8d0c8; cursor: pointer;
+    transition: transform 0.3s;
+  }
+  .game-images img:hover { transform: scale(1.02); }
+
+  /* Lightbox */
+  #lightbox {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,0.88);
+    display: none; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  #lightbox.active { display: flex; }
+  #lightbox img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 4px; }
+
+  @media (max-width: 640px) {
+    .game-images img { height: 200px; }
+  }
+</style>
+</head>
+<body>
+<nav>
+  <a href="/">home</a>
+  <a href="/Pages/Materials/Resume_Feb_7.pdf" target="_blank">cv</a>
+  <a href="/blog-archive">blog</a>
+  <a href="/creative" style="color:#2a2a2a;">portfolio</a>
+</nav>
+<div class="main">
+  <a href="/creative" class="back">&larr; back to creative</a>
+  <h1># card games</h1>
+
+  <div class="game-row">
+    <div class="game-header">
+      <h2>Space Marines</h2>
+      <span class="game-date">August 2025</span>
+    </div>
+    <div class="game-links">
+      <a href="/card_games/space_marines_08:25/space_marines.pdf" target="_blank">cards pdf</a>
+      <a href="/card_games/space_marines_08:25/space_marines_rules_early.pdf" target="_blank">rules pdf</a>
+    </div>
+    <div class="game-images">
+      <img src="/card_games/space_marines_08:25/space_marines_1.jpg" alt="Space Marines" onclick="openLB(this)">
+      <img src="/card_games/space_marines_08:25/space_marines_2.jpg" alt="Space Marines 2" onclick="openLB(this)">
+    </div>
+  </div>
+
+  <div class="game-row">
+    <div class="game-header">
+      <h2>Monty</h2>
+      <span class="game-date">March 2026</span>
+    </div>
+    <div class="game-images">
+      <img src="/card_games/monty_03:26/monty_1.jpg" alt="Monty" onclick="openLB(this)">
+    </div>
+  </div>
+
+  <div class="game-row">
+    <div class="game-header">
+      <h2>Tyranny</h2>
+      <span class="game-date">June 2024</span>
+    </div>
+    <div class="game-images">
+      <img src="/card_games/tyranny_06:2024/image0.jpg" alt="Tyranny" onclick="openLB(this)">
+      <img src="/card_games/tyranny_06:2024/image1.jpg" alt="Tyranny 2" onclick="openLB(this)">
+    </div>
+  </div>
+
+  <div class="game-row">
+    <div class="game-header">
+      <h2>Yellow Wallpaper</h2>
+      <span class="game-date">April 2023</span>
+    </div>
+    <div class="game-links">
+      <a href="/card_games/yellow_wallpaper_04:2023/Yellow_wallpaper.pdf" target="_blank">pdf</a>
+    </div>
+  </div>
+</div>
+
+<div id="lightbox" onclick="closeLB()"><img id="lb-img" src="" alt=""></div>
+<script>
+function openLB(img){ document.getElementById('lb-img').src=img.src; document.getElementById('lightbox').classList.add('active'); }
+function closeLB(){ document.getElementById('lightbox').classList.remove('active'); }
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeLB(); });
+</script>
+</body>
+</html>

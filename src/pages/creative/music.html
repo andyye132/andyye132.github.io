@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Music — Andy Ye</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #f6f1ee; font-family: 'JetBrains Mono', monospace; color: #2a2a2a;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 31px, rgba(190,182,174,0.12) 31px, rgba(190,182,174,0.12) 32px);
+    background-size: 100% 32px;
+  }
+  nav {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding: 0 2rem; height: 48px;
+    background: rgba(246,241,238,0.65); backdrop-filter: blur(12px);
+  }
+  nav a { font-size: 0.78rem; color: #4a9a9a; padding: 14px 16px; text-decoration: none; transition: color 0.2s; }
+  nav a:hover { color: #2a7a7a; }
+  .main { max-width: 820px; margin: 0 auto; padding: 3rem 2rem 6rem; }
+  h1 { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .back { font-size: 0.75rem; color: #4a9a9a; text-decoration: none; display: inline-block; margin-bottom: 1.5rem; }
+  .back:hover { color: #2a7a7a; }
+
+  .piece {
+    padding: 1.2rem 0;
+    border-bottom: 1px solid #d8d0c8;
+  }
+  .piece-title {
+    font-size: 0.9rem; font-weight: 700; color: #2a2a2a;
+    margin-bottom: 0.3rem;
+  }
+  .piece-meta {
+    font-size: 0.72rem; color: #999; margin-bottom: 0.5rem;
+  }
+  .piece-links {
+    display: flex; gap: 0.8rem;
+  }
+  .piece-links a {
+    font-size: 0.75rem; color: #4a9a9a; text-decoration: none;
+    border: 1px solid #4a9a9a; padding: 4px 12px; border-radius: 3px;
+    transition: background 0.2s, color 0.2s;
+  }
+  .piece-links a:hover { background: #4a9a9a; color: #f6f1ee; }
+</style>
+</head>
+<body>
+<nav>
+  <a href="/">home</a>
+  <a href="/Pages/Materials/Resume_Feb_7.pdf" target="_blank">cv</a>
+  <a href="/blog-archive">blog</a>
+  <a href="/creative" style="color:#2a2a2a;">portfolio</a>
+</nav>
+<div class="main">
+  <a href="/creative" class="back">&larr; back to creative</a>
+  <h1># music</h1>
+
+  <div class="piece">
+    <div class="piece-title">rainstorm</div>
+    <div class="piece-meta">2025 · piano and cello</div>
+    <div class="piece-links">
+      <a href="https://audio.com/andy-ye/audio/rainstorm-duet" target="_blank">listen</a>
+      <a href="/music/rainstorm.pdf" download>pdf</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

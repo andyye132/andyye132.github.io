@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>on the pursuit for one good idea — Andy Ye</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Source+Serif+4:wght@400;600&family=JetBrains+Mono:wght@400;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #f6f1ee; font-family: 'Source Serif 4', Georgia, serif; color: #1a1a1a;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 31px, rgba(190,182,174,0.12) 31px, rgba(190,182,174,0.12) 32px);
+    background-size: 100% 32px;
+  }
+
+  /* Nav */
+  nav {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding: 0 2rem; height: 48px;
+    background: rgba(246,241,238,0.65); backdrop-filter: blur(12px);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  nav a { font-size: 0.78rem; color: #4a9a9a; padding: 14px 16px; text-decoration: none; transition: color 0.2s; }
+  nav a:hover { color: #2a7a7a; }
+
+  /* Masthead */
+  .masthead {
+    text-align: center; padding: 2.5rem 2rem 1.5rem;
+    border-bottom: 2px solid #1a1a1a;
+    max-width: 1000px; margin: 0 auto;
+  }
+  .masthead h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2.8rem; font-weight: 900; font-style: italic;
+    color: #1a1a1a; letter-spacing: -1px;
+  }
+  .masthead .date-line {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem; color: #999; margin-top: 0.5rem;
+    letter-spacing: 0.5px;
+  }
+
+  /* Grid layout */
+  .grid {
+    max-width: 1000px; margin: 0 auto; padding: 1.5rem 2rem 4rem;
+    display: grid;
+    grid-template-columns: 1fr 1px 1fr 1px 1fr;
+    gap: 0;
+  }
+  .divider { background: #d8d0c8; }
+  .col { padding: 0 1.2rem; }
+
+  /* Featured (first article, spans left column) */
+  .featured {
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #d8d0c8;
+    margin-bottom: 1.2rem;
+  }
+  .featured img {
+    width: 100%; height: auto; margin-bottom: 0.8rem;
+    border: 1px solid #e0d8d0;
+  }
+  .featured h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.4rem; font-weight: 700; line-height: 1.3;
+    margin-bottom: 0.4rem;
+  }
+  .featured h2 a { color: #1a1a1a; text-decoration: none; }
+  .featured h2 a:hover { color: #4a9a9a; }
+  .featured p {
+    font-size: 0.85rem; color: #555; line-height: 1.7;
+  }
+  .featured .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem; color: #bbb; margin-top: 0.5rem;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+
+  /* Regular article */
+  .article {
+    padding: 1rem 0;
+    border-bottom: 1px solid #e8e0d8;
+  }
+  .article:last-child { border-bottom: none; }
+  .article h3 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1rem; font-weight: 700; line-height: 1.35;
+    margin-bottom: 0.3rem;
+  }
+  .article h3 a { color: #1a1a1a; text-decoration: none; }
+  .article h3 a:hover { color: #4a9a9a; }
+  .article p {
+    font-size: 0.78rem; color: #666; line-height: 1.6;
+  }
+  .article .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem; color: #bbb; margin-top: 0.3rem;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .article img {
+    width: 100%; height: auto; margin-bottom: 0.6rem;
+    border: 1px solid #e0d8d0;
+  }
+  .tag {
+    display: inline-block; font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem; color: #4a9a9a;
+    border: 1px solid rgba(74,154,154,0.3);
+    padding: 1px 5px; margin-right: 3px; margin-top: 3px;
+    border-radius: 2px;
+  }
+
+  @media (max-width: 700px) {
+    .grid { grid-template-columns: 1fr; }
+    .divider { display: none; }
+    .masthead h1 { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+<nav>
+  <a href="/">home</a>
+  <a href="/Pages/Materials/Resume_Feb_7.pdf" target="_blank">cv</a>
+  <a href="/blog-archive" style="color:#2a2a2a;">blog</a>
+  <a href="/creative">portfolio</a>
+</nav>
+
+<div class="masthead">
+  <h1>on the pursuit for one good idea</h1>
+  <div class="date-line" id="today-date"></div>
+</div>
+
+<div class="grid" id="blog-grid">
+  <div class="col" id="col-left"></div>
+  <div class="divider"></div>
+  <div class="col" id="col-mid"></div>
+  <div class="divider"></div>
+  <div class="col" id="col-right"></div>
+</div>
+
+<script>
+// Date line
+const now = new Date();
+document.getElementById('today-date').textContent = now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+fetch('/api/posts.json').then(r=>r.json()).then(posts=>{
+  if(!posts.length) return;
+  const left = document.getElementById('col-left');
+  const mid = document.getElementById('col-mid');
+  const right = document.getElementById('col-right');
+
+  // First post is featured in left column
+  const f = posts[0];
+  const fd = new Date(f.date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  const fimg = f.image ? `<img src="${f.image}" alt="${f.title}">` : '';
+  const ftags = f.tags.map(t=>'<span class="tag">'+t+'</span>').join(' ');
+  left.innerHTML = `<div class="featured">
+    ${fimg}
+    <h2><a href="/blog/${f.slug}">${f.title}</a></h2>
+    <p>${f.description}</p>
+    <div class="meta">${fd} ${ftags}</div>
+  </div>`;
+
+  // Distribute remaining posts across 3 columns
+  const cols = [left, mid, right];
+  posts.slice(1).forEach((p, i) => {
+    const d = new Date(p.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    const img = p.image ? `<img src="${p.image}" alt="${p.title}">` : '';
+    const tags = p.tags.map(t=>'<span class="tag">'+t+'</span>').join(' ');
+    const col = cols[(i + 1) % 3]; // +1 because left already has featured
+    col.innerHTML += `<div class="article">
+      ${img}
+      <h3><a href="/blog/${p.slug}">${p.title}</a></h3>
+      <p>${p.description}</p>
+      <div class="meta">${d} ${tags}</div>
+    </div>`;
+  });
+}).catch(()=>{});
+</script>
+</body>
+</html>

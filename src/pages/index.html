@@ -8,6 +8,7 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  ::selection { background: #4a9a9a; color: #fff; }
   body { background: #0a0e14; overflow: hidden; font-family: 'JetBrains Mono', monospace; color: #e0e0e0; }
   #game { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
 
@@ -95,6 +96,8 @@
   .interior-tabs button:hover { color: #aaa; }
   .interior-tabs button.active { color: var(--zone-color, #a8c7fa); border-bottom-color: var(--zone-color, #a8c7fa); }
   .interior-video { width: 100%; max-height: 320px; object-fit: contain; background: #000; margin-bottom: 0.8rem; border: 1px solid #252a38; }
+  .interior-iframe { width: 100%; height: 70vh; border: 1px solid #252a38; background: #f6f1ee; border-radius: 4px; }
+  .fullscreen-link { display: inline-block; margin-top: 0.5rem; font-size: 0.7rem; color: var(--zone-color, #a8c7fa); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
   .dl-link {
     display: inline-block; font-size: 0.7rem; padding: 4px 12px;
     border: 1px solid var(--zone-color, #a8c7fa); color: var(--zone-color, #a8c7fa);
@@ -187,31 +190,348 @@
     color: #fff; opacity: 0.4; letter-spacing: 0.5px;
     pointer-events: none;
   }
+
+  /* ─── SITE LAYER ─── */
+  #site {
+    position: fixed; inset: 0; z-index: 50;
+    overflow-y: auto; overflow-x: hidden;
+    font-family: 'JetBrains Mono', monospace;
+    color: #2a2a2a;
+    transition: opacity 0.6s ease;
+    background: #f6f1ee;
+  }
+  #site.hidden { opacity: 0; pointer-events: none; }
+
+  #site-nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding: 0 2rem; height: 48px;
+    background: transparent;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s, background 0.3s, backdrop-filter 0.3s;
+  }
+  #site-nav.scrolled {
+    opacity: 1; pointer-events: all;
+    background: rgba(246,241,238,0.85);
+    backdrop-filter: blur(12px);
+  }
+  .nav-tabs { display: flex; gap: 0; }
+  .nav-tabs .tab {
+    background: none; border: none;
+    font-family: inherit; font-size: 0.9rem; color: #4a9a9a;
+    padding: 14px 18px; cursor: pointer; text-decoration: none;
+    transition: color 0.2s; font-weight: 700;
+  }
+  .nav-tabs .tab:hover { color: #2a7a7a; }
+
+  /* Full-screen hero with canvas world */
+  #hero {
+    position: relative; width: 100%; height: 100vh;
+    overflow: hidden; cursor: pointer;
+  }
+  #hero canvas#preview {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; display: block;
+  }
+  #cloud-canvas {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
+    pointer-events: none; z-index: 52;
+  }
+  #hero-blur {
+    position: absolute; inset: 0; z-index: 1;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    pointer-events: none;
+    -webkit-mask-image: radial-gradient(circle 200px at var(--mx, -300px) var(--my, -300px), transparent 0%, transparent 50%, black 100%);
+    mask-image: radial-gradient(circle 200px at var(--mx, -300px) var(--my, -300px), transparent 0%, transparent 50%, black 100%);
+    transition: backdrop-filter 0.5s;
+  }
+  .window-hint {
+    position: fixed; z-index: 4;
+    color: #fff; font-size: 0.9rem; font-weight: 700;
+    text-shadow: 0 0 30px rgba(0,0,0,0.7), 0 2px 10px rgba(0,0,0,0.5);
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+    letter-spacing: 1px; white-space: nowrap;
+    transform: translate(-50%, -140%);
+  }
+  .window-hint.visible { opacity: 1; }
+  #hero-flash {
+    position: absolute; inset: 0; z-index: 5;
+    background: #fff; opacity: 0; pointer-events: none;
+  }
+
+  /* Custom cursor dot */
+  #cursor-dot {
+    position: fixed; z-index: 999; pointer-events: none;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #4a9a9a;
+    box-shadow: 0 0 12px rgba(74,154,154,0.6), 0 0 24px rgba(74,154,154,0.3);
+    transform: translate(-50%, -50%);
+    transition: opacity 0.2s, transform 0.08s ease-out;
+    opacity: 0;
+  }
+  #cursor-dot.visible { opacity: 1; }
+  #cursor-dot.hero-hover { width: 16px; height: 16px; box-shadow: 0 0 18px rgba(74,154,154,0.8), 0 0 36px rgba(74,154,154,0.4); }
+  #site, #site * { cursor: none !important; }
+
+  /* Scroll indicator */
+  .scroll-hint {
+    position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+    z-index: 4; color: rgba(255,255,255,0.6); font-size: 0.7rem;
+    letter-spacing: 1px; text-shadow: 0 1px 6px rgba(0,0,0,0.5);
+    animation: scrollBounce 2s ease-in-out infinite;
+  }
+  @keyframes scrollBounce { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(6px)} }
+
+  /* Content below the fold */
+  .site-content {
+    background: #f6f1ee; position: relative; z-index: 1; overflow: hidden;
+    background-image: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 31px,
+      rgba(190,182,174,0.12) 31px,
+      rgba(190,182,174,0.12) 32px
+    );
+    background-size: 100% 32px;
+  }
+  .site-main {
+    max-width: 820px; margin: 0 auto;
+    padding: 3rem 2rem 6rem;
+    position: relative; z-index: 2;
+  }
+
+  /* Giant watermark text like terminal.shop/cron with 3D depth */
+  .watermark {
+    position: absolute; top: -3rem; left: 50%; transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22vw; font-weight: 700; letter-spacing: -0.04em;
+    color: rgba(235,228,222,0.6);
+    white-space: nowrap; pointer-events: none; z-index: 1;
+    line-height: 1;
+    user-select: none;
+    text-shadow:
+      1px 1px 0 rgba(220,212,204,0.5),
+      2px 2px 0 rgba(210,202,194,0.4),
+      3px 3px 0 rgba(200,192,184,0.3),
+      4px 4px 0 rgba(190,182,174,0.2),
+      5px 5px 0 rgba(180,172,164,0.15),
+      6px 6px 0 rgba(170,162,154,0.1);
+  }
+
+  /* About section — academic style */
+  .about-section { display: flex; gap: 2.5rem; align-items: flex-start; margin-bottom: 2rem; }
+  .about-photo-wrap {
+    position: relative; width: 180px; height: 220px; flex-shrink: 0;
+    border-radius: 4px; overflow: hidden;
+  }
+  .about-photo {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+  .about-text h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.3rem; color: #2a2a2a; }
+  .about-text .subtitle { font-size: 0.78rem; color: #999; margin-bottom: 0.8rem; line-height: 1.6; }
+  .about-text p { font-size: 0.82rem; color: #555; line-height: 1.85; }
+  .about-text a { color: #4a9a9a; text-decoration: underline; text-underline-offset: 2px; }
+
+  /* News section */
+  .news-list { list-style: none; padding: 0; }
+  .news-list li {
+    display: flex; gap: 1rem; padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(200,190,180,0.3);
+    font-size: 0.8rem; line-height: 1.6;
+  }
+  .news-list .news-date { color: #bbb; flex-shrink: 0; width: 90px; font-size: 0.72rem; }
+  .news-list .news-body { color: #555; }
+  .news-list .news-body a { color: #4a9a9a; }
+
+  /* Nav under photo */
+  .photo-nav {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.5rem; margin-top: 0.6rem;
+  }
+  .photo-nav a {
+    font-size: 0.8rem; font-weight: 700; color: #4a9a9a;
+    text-decoration: none; transition: color 0.2s;
+  }
+  .photo-nav a:hover { color: #2a7a7a; }
+  .photo-nav span { color: #ccc; font-size: 0.7rem; }
+
+  /* Section styles for site panels */
+  .s-section { margin-bottom: 2.5rem; }
+  .s-section h2 { font-size: 0.9rem; font-weight: 700; color: #2a2a2a; border-bottom: 1px solid #d8d0c8; padding-bottom: 0.5rem; margin-bottom: 1rem; }
+  .s-section h3 { font-size: 0.82rem; font-weight: 700; color: #2a2a2a; margin-bottom: 0.4rem; }
+  .s-section p { font-size: 0.8rem; color: #555; line-height: 1.8; margin-bottom: 0.8rem; }
+  .s-section ul { font-size: 0.78rem; color: #666; line-height: 1.7; padding-left: 1.2rem; margin-bottom: 0.8rem; }
+  .s-section a { color: #4a9a9a; text-decoration: underline; text-underline-offset: 2px; }
+  .s-card {
+    background: #ede7e1; border: 1px solid #d8d0c8; border-radius: 4px;
+    padding: 1rem 1.2rem; margin-bottom: 0.8rem;
+  }
+  .s-card h3 { margin-bottom: 0.3rem; }
+  .s-card .meta { font-size: 0.7rem; color: #999; margin-bottom: 0.5rem; }
+  .s-tag {
+    display: inline-block; font-size: 0.65rem; color: #4a9a9a;
+    border: 1px solid rgba(74,154,154,0.3); padding: 1px 6px; margin-right: 4px; margin-top: 4px;
+    border-radius: 2px;
+  }
+  .s-dl {
+    display: inline-block; font-size: 0.75rem; padding: 5px 14px;
+    border: 1px solid #4a9a9a; color: #4a9a9a; text-decoration: none;
+    transition: background 0.2s, color 0.2s; border-radius: 3px;
+  }
+  .s-dl:hover { background: #4a9a9a; color: #f6f1ee; }
+
+  /* Blog list for site */
+  .blog-item { display: flex; gap: 1rem; align-items: flex-start; padding: 1rem 0; border-bottom: 1px solid #e8e0d8; cursor: pointer; transition: background 0.15s; text-decoration: none; }
+  .blog-item:hover { background: #ede7e1; margin: 0 -1rem; padding: 1rem; border-radius: 4px; }
+  .blog-thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 4px; flex-shrink: 0; border: 1px solid #d8d0c8; }
+  .blog-item h3 { font-size: 0.82rem; color: #2a2a2a; margin-bottom: 0.2rem; }
+  .blog-item p { font-size: 0.75rem; color: #888; line-height: 1.5; margin: 0; }
+  .blog-item .blog-date { font-size: 0.7rem; color: #bbb; margin-top: 0.3rem; }
+
+  /* Exit game button */
+  #exit-game-btn {
+    position: fixed; bottom: 20px; right: 20px; z-index: 6;
+    background: rgba(246,241,238,0.85); border: 1px solid #4a9a9a; color: #4a9a9a;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 8px 18px;
+    cursor: none; transition: background 0.2s, color 0.2s;
+    backdrop-filter: blur(8px); display: none; border-radius: 3px;
+  }
+  #exit-game-btn:hover { background: #4a9a9a; color: #f6f1ee; }
+
+  /* Game loading overlay */
+  #game-loading {
+    position: fixed; inset: 0; z-index: 60;
+    background: #fff;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    transition: opacity 0.5s;
+  }
+  #game-loading.active { display: flex; }
+  #game-loading.fade-out { opacity: 0; }
+  #game-loading .gl-text { color: #4a9a9a; font-size: 11px; margin-bottom: 10px; letter-spacing: 1px; font-family: 'JetBrains Mono', monospace; }
+  #game-loading .gl-bar-wrap { width: 180px; height: 4px; background: #e8e2dc; border: 1px solid rgba(74,154,154,0.25); border-radius: 2px; overflow: hidden; }
+  #game-loading .gl-bar-fill { height: 100%; width: 0%; background: #4a9a9a; transition: width 0.15s linear; box-shadow: 0 0 8px rgba(74,154,154,0.5); }
+
+  /* Hide game UI by default (site mode) */
+  .game-ui { visibility: hidden; pointer-events: none; opacity: 0; }
+  .game-ui-active { visibility: visible; pointer-events: all; opacity: 1; }
+
+  @media (max-width: 640px) {
+    #site-nav { padding: 0 0.5rem; }
+    .nav-tabs .tab { padding: 14px 10px; font-size: 0.68rem; }
+    .site-main { padding: 2rem 1rem 4rem; }
+    .about-section { flex-direction: column; gap: 1.5rem; }
+    .about-photo-wrap { width: 140px; height: 175px; }
+    .watermark { font-size: 30vw; }
+  }
 </style>
 </head>
 <body>
-<div id="loading"><p class="load-text">> initializing base...</p><div class="bar-wrap"><div class="bar-fill" id="load-bar"></div></div></div>
+
+<!-- Custom cursor -->
+<div id="cursor-dot"></div>
+
+<!-- Cloud overlay (outside #site so it's never clipped) -->
+<canvas id="cloud-canvas"></canvas>
+
+<!-- Nav (outside #site so it's above clouds) -->
+<nav id="site-nav">
+  <div class="nav-tabs">
+    <a class="tab" href="/Pages/Materials/Resume_Feb_7.pdf" target="_blank">cv</a>
+    <a class="tab" href="/blog-archive">blog</a>
+    <a class="tab" href="/creative">portfolio</a>
+  </div>
+</nav>
+
+<!-- ═══ SITE LAYER ═══ -->
+<div id="site">
+  <!-- Full-screen hero with world preview -->
+  <div id="hero" onclick="enterGame()">
+    <canvas id="preview"></canvas>
+    <div id="hero-blur"></div>
+    <div class="window-hint">walk around my mind?</div>
+    <div id="hero-flash"></div>
+    <div class="scroll-hint">scroll down ↓</div>
+  </div>
+
+  <!-- Content below the fold -->
+  <div class="site-content">
+    <div class="site-main">
+
+    <!-- ABOUT -->
+    <div id="about" class="s-section" style="padding-top:2rem;">
+      <div class="about-section">
+        <div>
+          <div class="about-photo-wrap" id="photo-wrap">
+            <img src="/anotherbout.png" alt="Andy Ye" class="about-photo" />
+          </div>
+          <div class="photo-nav">
+            <a href="/Pages/Materials/Resume_Feb_7.pdf" target="_blank">cv</a>
+            <span>|</span>
+            <a href="/blog-archive">blog</a>
+            <span>|</span>
+            <a href="/creative">portfolio</a>
+          </div>
+        </div>
+        <div class="about-text">
+          <h1>Andy Ye</h1>
+          <div class="subtitle">CS @ UW</div>
+          <p>I'm an undergraduate in computer science at the <a href="https://www.cs.washington.edu/" target="_blank">Paul G. Allen School</a> at the <a href="https://www.washington.edu/" target="_blank">University of Washington</a>. I am extremely grateful to be advised by <a href="https://mattwallingford.github.io/" target="_blank">Matt Wallingford</a> (at <a href="https://allenai.org/" target="_blank">Ai2</a>) and <a href="https://lichard49.github.io" target="_blank">Richard Li</a> (at <a href="https://ubicomplab.cs.washington.edu/" target="_blank">UbiComp Lab</a>).</p>
+          <p style="margin-top:0.5rem;">I am broadly interested in creating efficient algorithms for physical applications. I enjoy writing <a href="/blog-archive">essays</a> on media, advertisement, and narcissism. I make <a href="/creative/games">card games</a>. I also <a href="/creative/art">oil paint</a> and play the piano, and have recently begun <a href="/creative/music">composing some pieces</a>.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEWS -->
+    <div class="s-section">
+      <h2># news</h2>
+      <ul class="news-list">
+        <li><span class="news-date">Apr 2026</span><span class="news-body">I will be going to Brown as a research intern with Prof. <a href="https://vivo.brown.edu/display/nayanian" target="_blank">Nora Ayanian</a> this summer! (AIREU Program)</span></li>
+        <li><span class="news-date">Oct 2025</span><span class="news-body">Joined <a href="https://allenai.org/" target="_blank">Allen Institute for AI (Ai2)</a> as an undergraduate researcher with <a href="https://mattwallingford.github.io/" target="_blank">Matt Wallingford</a>.</span></li>
+        <li><span class="news-date">Oct 2025</span><span class="news-body">Joined <a href="https://ubicomplab.cs.washington.edu/" target="_blank">UbiComp Lab</a> (UW CSE) working on Bayesian psychophysics with <a href="https://lichard49.github.io" target="_blank">Richard Li</a>.</span></li>
+        <li><span class="news-date">Sep 2024</span><span class="news-body">Started B.S. Computer Science at the University of Washington, Seattle.</span></li>
+        <li><span class="news-date">May 2023</span><span class="news-body">4th place at <a href="https://isef.net/project/cbio056-helu-dti-drug-target-prediction-via-deep-learning" target="_blank">ISEF 2023</a> in Computational Biology with HeLU-DTI.</span></li>
+      </ul>
+    </div>
+
+
+
+    </div><!-- .site-main -->
+  </div><!-- .site-content -->
+</div>
+
+<!-- ═══ GAME LOADING (beige themed) ═══ -->
+<div id="game-loading">
+  <p class="gl-text">> initializing base...</p>
+  <div class="gl-bar-wrap"><div class="gl-bar-fill" id="gl-bar"></div></div>
+</div>
+
+<!-- ═══ EXIT GAME BUTTON ═══ -->
+<button id="exit-game-btn" onclick="exitGame()">← back to site</button>
+
+<!-- ═══ GAME LAYER (existing, hidden by default) ═══ -->
+<div id="loading" style="display:none"><p class="load-text">> initializing base...</p><div class="bar-wrap"><div class="bar-fill" id="load-bar"></div></div></div>
 <canvas id="game"></canvas>
-<div id="title-bar"><span id="title-path">~/andy-ye/base</span><span id="title-hint">click a section to explore</span></div>
-<div id="weather-hud"><div id="weather-time"></div><div id="weather-desc"></div></div>
-<button id="back-btn" onclick="goBack()">← back</button>
-<div id="tooltip"></div>
-<div id="overlay" onclick="closeInterior()"></div>
-<div id="interior"></div>
-<div class="zone-label" data-zone="blog" style="color:#d4a050">creative</div>
-<div class="zone-label" data-zone="projects" style="color:#e08040">projects</div>
-<div class="zone-label" data-zone="research" style="color:#c07ab8">research</div>
-<div class="zone-label" data-zone="materials" style="color:#90a8c0">materials</div>
-<div class="zone-label" data-zone="info" style="color:#c8e0a0">about</div>
-<div id="weather-btns">
+<div id="title-bar" class="game-ui"><span id="title-path">~/andy-ye/base</span><span id="title-hint">click a section to explore</span></div>
+<div id="weather-hud" class="game-ui"><div id="weather-time"></div><div id="weather-desc"></div></div>
+<button id="back-btn" class="game-ui" onclick="goBack()">← back</button>
+<div id="tooltip" class="game-ui"></div>
+<div id="overlay" class="game-ui" onclick="closeInterior()"></div>
+<div id="interior" class="game-ui"></div>
+<div class="zone-label game-ui" data-zone="blog" style="color:#d4a050">creative</div>
+<div class="zone-label game-ui" data-zone="projects" style="color:#e08040">projects</div>
+<div class="zone-label game-ui" data-zone="research" style="color:#c07ab8">research</div>
+<div class="zone-label game-ui" data-zone="materials" style="color:#90a8c0">materials</div>
+<div class="zone-label game-ui" data-zone="info" style="color:#c8e0a0">about</div>
+<div id="weather-btns" class="game-ui">
   <button class="weather-btn active" data-weather="auto">seattle</button>
   <button class="weather-btn" data-weather="clear">clear</button>
   <button class="weather-btn" data-weather="cloudy">cloudy</button>
   <button class="weather-btn" data-weather="rainy">rainy</button>
   <button class="weather-btn" data-weather="stormy">stormy</button>
 </div>
-<div id="tagline">head up in the clouds</div>
-<div id="sun-arrows">
+<div id="tagline" class="game-ui">head up in the clouds</div>
+<div id="sun-arrows" class="game-ui">
   <button id="sun-left" class="sun-arrow">&#9664;&#9664;</button>
   <span id="sun-label">wind time</span>
   <button id="sun-right" class="sun-arrow">&#9654;&#9654;</button>
@@ -1227,7 +1547,8 @@ const buildings=prep([
     gx:14,gy:2,fw:2,fd:2,h:24,rh:10,chimney:true,
     wL:'#452218',wR:'#65321e',wT:'#754228',rL:'#2d2d3a',rR:'#3d3d50',rT:'#4d4d65',win:'#e08040',
     content:`<h2>> HeLU-DTI</h2><button class="close-btn" onclick="closeInterior()">× close</button>
-      <div class="item"><p>LLM + heterogeneous graph neural network for drug-target interaction prediction. 93.7% AUPRC, 73.2% on unseen data.</p><span class="tag">Python</span><span class="tag">PyTorch</span><span class="tag">HGNN</span><span class="tag">NLP</span></div>`},
+      <div class="item"><p>LLM + heterogeneous graph neural network for drug-target interaction prediction. 93.7% AUPRC, 73.2% on unseen data.</p><span class="tag">Python</span><span class="tag">PyTorch</span><span class="tag">HGNN</span><span class="tag">NLP</span>
+      <br><a href="https://isef.net/project/cbio056-helu-dti-drug-target-prediction-via-deep-learning" target="_blank" class="dl-link" style="margin-top:.6rem;">read more here &rarr;</a></div>`},
 
   // ── RESEARCH (2 buildings, SW quadrant) ──
   {id:'research1',zone:'research',style:'observatory',label:'Allen Institute for AI',sub:'cv dataset pipeline',path:'research/ai2',
@@ -2156,22 +2477,31 @@ function setInteriorZoneColor(zone){
   const zc=zones[zone]?.color||'#a8c7fa';
   document.getElementById('interior').style.setProperty('--zone-color',zc);
 }
+function showInteriorPage(url, title){
+  const el=document.getElementById('interior');
+  const zc=el.style.getPropertyValue('--zone-color')||'#a8c7fa';
+  el.innerHTML=`<h2>> ${title}</h2><button class="close-btn" onclick="closeInterior()">\u00d7 close</button>
+    <iframe src="${url}" class="interior-iframe" frameborder="0"></iframe>
+    <a href="${url}" target="_blank" class="fullscreen-link">open full page &rarr;</a>`;
+  setTimeout(()=>el.classList.add('active'),50);
+}
+
 function showInterior(b){
   setInteriorZoneColor(b.zone);
-  if(b.id==='blog4'){showArchive();return;}
+  // Pages that open as iframes
+  if(b.id==='research1'){showInteriorPage('/research','Allen Institute for AI');return;}
+  if(b.id==='research2'){showInteriorPage('/research','UbiComp Lab');return;}
+  if(b.id==='blog4'){showInteriorPage('/blog-archive','archive');return;}
+  if(b.id==='blog1'){showInteriorPage('/creative','art');return;}
+  if(b.id==='blog3'){showInteriorPage('/creative','game design');return;}
+  // Existing functions
   if(b.id==='blog2'){showFeatured();return;}
   if(b.id==='info'){showAbout();return;}
   if(b.id==='materials1'){showResume();return;}
-  if(b.id==='research1'){showAi2();return;}
-  if(b.id==='research2'){showUbicomp();return;}
   if(b.id==='materials2'){showTranscripts();return;}
   if(!b.content)return;
   const el=document.getElementById('interior');
   el.innerHTML=b.content;
-  if(b.path){
-    const zc=zones[b.zone]?.color||'#a8c7fa';
-    el.innerHTML+=`<a href="/${b.path}" style="display:inline-block;margin-top:.8rem;color:${zc};font-size:.75rem;text-decoration:underline;text-underline-offset:3px;">open full page &rarr;</a>`;
-  }
   setTimeout(()=>el.classList.add('active'),50);
 }
 
@@ -2290,7 +2620,7 @@ function showAbout(){
           <li>Provider registry with runtime OAuth token injection, disk-backed session persistence, and workspace-aware context planning</li>
         </ul>
       </div>
-      <p style="margin-top:.4rem;"><strong style="color:#ddd;">HeLU-DTI</strong> <span style="color:#555;font-size:.6rem;">Python, PyTorch, GNNs, LLMs</span><br><span style="color:#999;">LLM + heterogeneous graph neural network for drug-target interaction prediction. 93.7% AUPRC, 73.2% on unseen data. 4th place at ISEF 2023 in Computational Biology.</span></p>
+      <p style="margin-top:.4rem;"><strong style="color:#ddd;">HeLU-DTI</strong> <span style="color:#555;font-size:.6rem;">Python, PyTorch, GNNs, LLMs</span><br><span style="color:#999;">LLM + heterogeneous graph neural network for drug-target interaction prediction. 93.7% AUPRC, 73.2% on unseen data. 4th place at ISEF 2023 in Computational Biology.</span> <a href="https://isef.net/project/cbio056-helu-dti-drug-target-prediction-via-deep-learning" target="_blank" style="color:var(--zone-color, #a8c7fa);font-size:.7rem;text-decoration:underline;text-underline-offset:2px;">read more here &rarr;</a></p>
       <p style="margin-top:.4rem;"><strong style="color:#ddd;">Catfish</strong> <span style="color:#555;font-size:.6rem;">Python, Azure, Meta & LinkedIn API</span><br><span style="color:#999;">Summarizes interviewer profiles by scraping public data via LinkedIn/Meta API. Generates conversation topics for upcoming interviews.</span></p>
     </div>
 
@@ -2368,6 +2698,7 @@ function showResume(){
         <li>LLM + heterogeneous GNN for drug-target interaction prediction. 93.7% AUPRC, 73.2% unseen.</li>
         <li>Embedding generation from SMILES/amino acid sequences across scalable modalities.</li>
       </ul>
+      <a href="https://isef.net/project/cbio056-helu-dti-drug-target-prediction-via-deep-learning" target="_blank" style="color:var(--zone-color, #a8c7fa);font-size:.65rem;text-decoration:underline;text-underline-offset:2px;margin-top:.3rem;display:inline-block;">read more here &rarr;</a>
     </div>
 
     <h3 ${hd}># awards</h3>
@@ -2804,6 +3135,11 @@ function render(){
 
   // Position HTML zone labels
   updateZoneLabels();
+
+  // Update preview canvas for site window
+  if(typeof siteVisible!=='undefined' && siteVisible && typeof previewCtx!=='undefined' && previewCtx){
+    previewCtx.drawImage(cv, 0, 0);
+  }
 }
 
 function updateZoneLabels(){
@@ -2890,20 +3226,273 @@ function init(){
   fetchWeather();setInterval(fetchWeather,600000);
   updateWeatherHUD();setInterval(updateWeatherHUD,30000);
   initSunArrows();
-  // Animate loading bar then fade out
-  const lb=document.getElementById('load-bar');
-  let lp=0;
-  const li=setInterval(()=>{
-    lp+=8+Math.random()*12;
-    if(lp>=100){lp=100;clearInterval(li);
-      setTimeout(()=>document.getElementById('loading').classList.add('hidden'),300);
-    }
-    lb.style.width=lp+'%';
-  },60);
+  // Old loading bar disabled - using site layer now
   requestAnimationFrame(loop);
 }
 
 document.fonts?.ready?.then(init)??init();
+
+// ═══════════════════════════════════════════════
+// SITE LAYER
+// ═══════════════════════════════════════════════
+let siteVisible = true;
+const siteEl = document.getElementById('site');
+const previewCv = document.getElementById('preview');
+const previewCtx = previewCv ? previewCv.getContext('2d') : null;
+if(previewCv){ previewCv.width = W; previewCv.height = H; }
+
+// ── Nav scroll behavior ──
+const siteNav = document.getElementById('site-nav');
+siteEl.addEventListener('scroll', ()=>{
+  siteNav.classList.toggle('scrolled', siteEl.scrollTop > 60);
+});
+
+// ── Nav smooth scroll for anchor links only ──
+document.querySelectorAll('#site-nav .tab[href^="#"]').forEach(a=>{
+  a.addEventListener('click', e=>{
+    e.preventDefault();
+    const id = a.getAttribute('href').slice(1);
+    const target = document.getElementById(id);
+    if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+  });
+});
+
+// ── Cloud overlay on hero ──
+const cloudCv = document.getElementById('cloud-canvas');
+const cloudCtx = cloudCv ? cloudCv.getContext('2d') : null;
+let heroClouds = [];
+let cloudAnimOffset = 0; // 0 = normal, 1 = fully parted
+let cloudAnimating = false;
+
+function prerenderHeroCloud(cubes){
+  // Pre-render a cloud to an offscreen canvas for performance
+  const CW=42, CH=21, CD=32;
+  const cTop='#eef2f8', cLeft='#d8dde8', cRight='#c4cad8';
+  // Find bounds
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  const sorted=[...cubes].sort((a,b)=>(a.gy-b.gy)||(a.gx-b.gx)||(a.gz-b.gz));
+  sorted.forEach(cb=>{
+    const s=cb.s;
+    const ox=(cb.gx-cb.gy)*CW*s*0.5;
+    const oy=(cb.gx+cb.gy)*CH*s*0.5 - cb.gz*CD*s;
+    const w=CW*s, h=CH*s, d=CD*s;
+    minX=Math.min(minX, ox); minY=Math.min(minY, oy-h/2);
+    maxX=Math.max(maxX, ox+w); maxY=Math.max(maxY, oy+h/2+d);
+  });
+  const pad=4;
+  const bw=Math.ceil(maxX-minX)+pad*2, bh=Math.ceil(maxY-minY)+pad*2;
+  const oc=document.createElement('canvas');
+  oc.width=bw; oc.height=bh;
+  const ox=-minX+pad, oy=-minY+pad;
+  const g=oc.getContext('2d');
+  sorted.forEach(cb=>{
+    const s=cb.s;
+    const px=ox+(cb.gx-cb.gy)*CW*s*0.5;
+    const py=oy+(cb.gx+cb.gy)*CH*s*0.5 - cb.gz*CD*s;
+    const w=CW*s, h=CH*s, d=CD*s;
+    g.fillStyle=cTop; g.beginPath();
+    g.moveTo(px,py); g.lineTo(px+w/2,py-h/2); g.lineTo(px+w,py); g.lineTo(px+w/2,py+h/2);
+    g.closePath(); g.fill();
+    g.fillStyle=cLeft; g.beginPath();
+    g.moveTo(px,py); g.lineTo(px+w/2,py+h/2); g.lineTo(px+w/2,py+h/2+d); g.lineTo(px,py+d);
+    g.closePath(); g.fill();
+    g.fillStyle=cRight; g.beginPath();
+    g.moveTo(px+w,py); g.lineTo(px+w/2,py+h/2); g.lineTo(px+w/2,py+h/2+d); g.lineTo(px+w,py+d);
+    g.closePath(); g.fill();
+  });
+  return {canvas:oc, ox:minX-pad, oy:minY-pad};
+}
+
+function initHeroClouds(){
+  if(!cloudCv) return;
+  const defs = [
+    // Left clouds — varied sizes 20-28, pushed to edge
+    { side:'left', baseX:-0.08, y:-0.02, size: 26, speed: 0.03, phase: 0.0,  alpha: 0.92 },
+    { side:'left', baseX:-0.04, y: 0.28, size: 20, speed: 0.06, phase: 2.1,  alpha: 0.80 },
+    { side:'left', baseX:-0.12, y: 0.42, size: 24, speed: 0.02, phase: 4.5,  alpha: 0.88 },
+    // Right clouds — varied sizes 20-28
+    { side:'right', baseX: 1.02, y:-0.03, size: 22, speed: 0.05, phase: 1.3,  alpha: 0.85 },
+    { side:'right', baseX: 1.0,  y: 0.30, size: 28, speed: 0.02, phase: 3.7, alpha: 0.88 },
+    { side:'right', baseX: 0.98, y: 0.58, size: 20, speed: 0.055,phase: 5.2, alpha: 0.82 },
+    // Corner clouds
+    { side:'left',  baseX:-0.22, y:-0.42, size: 28, speed: 0.025, phase: 1.8, alpha: 0.88 },
+    { side:'right', baseX: 1.15, y:-0.22, size: 24, speed: 0.04, phase: 3.2, alpha: 0.85 },
+  ];
+  heroClouds = defs.map(d=>{
+    const cubes = makeCloudCubes(d.size);
+    const buf = prerenderHeroCloud(cubes);
+    return { ...d, buf };
+  });
+}
+
+function drawHeroClouds(t){
+  if(!cloudCtx || !cloudCv) return;
+  const cw = cloudCv.width = cloudCv.clientWidth;
+  const ch = cloudCv.height = cloudCv.clientHeight;
+  cloudCtx.clearRect(0,0,cw,ch);
+
+  // Offset clouds by scroll so they scroll away with the hero
+  const scrollY = siteEl ? siteEl.scrollTop : 0;
+
+  heroClouds.forEach(cl=>{
+    const drift = Math.sin(t * 0.0003 * cl.speed * 10 + cl.phase) * 100;
+    const partX = cl.side==='left' ? -cloudAnimOffset * cw * 0.5 : cloudAnimOffset * cw * 0.5;
+    let bx = cl.baseX * cw + drift + partX + cl.buf.ox;
+    // Clamp so cloud centers can't go past 30% from their side
+    const maxInward = cw * 0.30;
+    if(cl.side==='left') bx = Math.min(bx, maxInward + cl.buf.ox);
+    else bx = Math.max(bx, cw - maxInward + cl.buf.ox);
+    const by = cl.y * ch + cl.buf.oy - scrollY;
+    cloudCtx.globalAlpha = cl.alpha * (1 - cloudAnimOffset * 0.4);
+    cloudCtx.drawImage(cl.buf.canvas, bx, by);
+  });
+  cloudCtx.globalAlpha = 1;
+}
+
+// Animate hero clouds
+let heroCloudRAF;
+function heroCloudLoop(t){
+  drawHeroClouds(t);
+  if(siteVisible) heroCloudRAF = requestAnimationFrame(heroCloudLoop);
+}
+initHeroClouds();
+requestAnimationFrame(heroCloudLoop);
+
+// ── Custom cursor dot ──
+const cursorDot = document.getElementById('cursor-dot');
+const windowHint = document.querySelector('.window-hint');
+const heroEl = document.getElementById('hero');
+const photoWrap = document.getElementById('photo-wrap');
+let hintTarget = null; // 'hero' or 'photo'
+const hintTexts = { hero: 'walk around my mind?', photo: "my hair isn't white anymore" };
+
+const heroBlur = document.getElementById('hero-blur');
+document.addEventListener('mousemove', e=>{
+  if(!siteVisible) return;
+  cursorDot.style.left = e.clientX + 'px';
+  cursorDot.style.top = e.clientY + 'px';
+  if(!cursorDot.classList.contains('visible')) cursorDot.classList.add('visible');
+  if(hintTarget && windowHint){
+    windowHint.style.left = e.clientX + 'px';
+    windowHint.style.top = e.clientY + 'px';
+  }
+  // Update blur clear circle position relative to hero
+  if(heroBlur && heroEl){
+    const rect = heroEl.getBoundingClientRect();
+    heroBlur.style.setProperty('--mx', (e.clientX - rect.left) + 'px');
+    heroBlur.style.setProperty('--my', (e.clientY - rect.top) + 'px');
+  }
+});
+document.addEventListener('mouseleave', ()=>{
+  cursorDot.classList.remove('visible');
+});
+
+function enterHint(key){
+  hintTarget = key;
+  cursorDot.classList.add('hero-hover');
+  if(windowHint){ windowHint.textContent = hintTexts[key]; windowHint.classList.add('visible'); }
+}
+function leaveHint(){
+  hintTarget = null;
+  cursorDot.classList.remove('hero-hover');
+  if(windowHint) windowHint.classList.remove('visible');
+}
+
+if(heroEl){
+  heroEl.addEventListener('mouseenter', ()=> enterHint('hero'));
+  heroEl.addEventListener('mouseleave', leaveHint);
+}
+if(photoWrap){
+  photoWrap.addEventListener('mouseenter', ()=> enterHint('photo'));
+  photoWrap.addEventListener('mouseleave', leaveHint);
+}
+
+// ── Blog list for site ──
+
+// ── Enter game mode ──
+window.enterGame = function(){
+  if(cloudAnimating) return;
+  cloudAnimating = true;
+
+  const flash = document.getElementById('hero-flash');
+  const gl = document.getElementById('game-loading');
+  const bar = document.getElementById('gl-bar');
+
+  // Phase 1: Clouds part while flash builds
+  const start = performance.now();
+  const cloudDur = 900;
+  function animatePart(now){
+    const p = Math.min(1, (now - start) / cloudDur);
+    cloudAnimOffset = 1 - Math.pow(1 - p, 3);
+    // Flash builds from 0 to 1 during cloud parting
+    flash.style.opacity = (p * p).toString();
+    if(p < 1){
+      requestAnimationFrame(animatePart);
+    } else {
+      // Phase 2: Flash is at peak (fully white) — show loading bar ON TOP of white
+      flash.style.opacity = '1';
+      gl.style.background = '#fff';
+      gl.classList.add('active');
+      bar.style.width = '0%';
+
+      // Phase 3: Loading bar fills
+      let prog = 0;
+      const iv = setInterval(()=>{
+        prog += 8 + Math.random()*12;
+        if(prog >= 100){
+          prog = 100; clearInterval(iv);
+          setTimeout(()=>{
+            gl.classList.add('fade-out');
+            flash.style.opacity = '0';
+            siteEl.style.display = 'none';
+            siteVisible = false;
+            cancelAnimationFrame(heroCloudRAF);
+            if(cloudCv) cloudCv.style.display = 'none';
+            document.getElementById('cursor-dot').classList.remove('visible');
+            // Show game UI
+            document.querySelectorAll('.game-ui').forEach(el=>{ el.classList.remove('game-ui'); el.classList.add('game-ui-active'); });
+            document.getElementById('exit-game-btn').style.display = 'block';
+            document.getElementById('site-nav').style.display = 'none';
+            resize();
+            setTimeout(()=>{ gl.classList.remove('active','fade-out'); gl.style.background=''; cloudAnimating = false; }, 500);
+          }, 300);
+        }
+        bar.style.width = prog + '%';
+      }, 60);
+    }
+  }
+  requestAnimationFrame(animatePart);
+};
+
+// ── Exit game mode ──
+window.exitGame = function(){
+  // Hide game UI
+  document.querySelectorAll('.game-ui-active').forEach(el=>{ el.classList.remove('game-ui-active'); el.classList.add('game-ui'); });
+  document.getElementById('exit-game-btn').style.display = 'none';
+  document.getElementById('site-nav').style.display = '';
+  closeInterior();
+
+  // Show site
+  siteVisible = true;
+  siteEl.style.display = '';
+  siteEl.classList.remove('hidden');
+  siteEl.scrollTop = 0;
+
+  // Restart cloud canvas with clouds fully parted, then animate them closing
+  cloudAnimOffset = 1;
+  if(cloudCv) cloudCv.style.display = '';
+  requestAnimationFrame(heroCloudLoop);
+
+  const start = performance.now();
+  const dur = 1000;
+  function animateClose(now){
+    const p = Math.min(1, (now - start) / dur);
+    cloudAnimOffset = 1 - (1 - Math.pow(1 - p, 3));
+    if(p < 1) requestAnimationFrame(animateClose);
+    else cloudAnimOffset = 0;
+  }
+  requestAnimationFrame(animateClose);
+};
 </script>
 </body>
 </html>
