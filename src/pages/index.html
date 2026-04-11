@@ -416,7 +416,16 @@
   .game-ui { visibility: hidden; pointer-events: none; opacity: 0; }
   .game-ui-active { visibility: visible; pointer-events: all; opacity: 1; }
 
-  @media (max-width: 640px) {
+  @media (max-width: 768px) {
+    #hero { display: none; }
+    #cloud-canvas { display: none; }
+    #hero-blur { display: none; }
+    #cursor-dot { display: none; }
+    #game-loading { display: none !important; }
+    #exit-game-btn { display: none !important; }
+    #site, #site * { cursor: auto !important; }
+    .scroll-hint { display: none; }
+    .window-hint { display: none; }
     #site-nav { padding: 0 0.5rem; }
     .nav-tabs .tab { padding: 14px 10px; font-size: 0.68rem; }
     .site-main { padding: 2rem 1rem 4rem; }
