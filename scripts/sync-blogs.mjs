@@ -33,7 +33,6 @@ const TAG_MAP = {
   'minifigure': ['psychology', 'identity'],
   'meaning':    ['philosophy', 'existentialism'],
   'on-media':   ['psychology', 'media'],
-  'on-music':   ['music', 'psychology'],
 };
 
 // ── RTF → plain text ──────────────────────────────────────────────
