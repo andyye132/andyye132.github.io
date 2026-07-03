@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Card Games — Andy Ye</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #fbfaf6; color: #1d1d1b; font-family: Georgia, 'Times New Roman', serif; font-size: 16.5px; line-height: 1.75; }
+  ::selection { background: #1c3aa9; color: #fff; }
+  a { color: #1c3aa9; }
+
+  .masthead { text-align: center; padding: 2.6rem 1rem 1.3rem; }
+  .masthead h1 { font-size: 2.5rem; font-weight: 700; color: #a09b92; letter-spacing: .02em; }
+  .masthead h1 a { color: inherit; text-decoration: none; }
+
+  nav.bar { border-top: 3px solid #ccc8c0; border-bottom: 3px solid #ccc8c0; background: #fffefb; }
+  nav.bar ul { list-style: none; display: flex; justify-content: space-around; flex-wrap: wrap; max-width: 780px; margin: 0 auto; }
+  nav.bar a { display: block; padding: .5rem 1.6rem; color: #1c3aa9; font-size: 1.05rem; text-decoration: none; }
+  nav.bar a:hover { text-decoration: underline; }
+  nav.bar .here { font-weight: 700; }
+
+  main { max-width: 780px; margin: 0 auto; padding: 2.5rem 1.4rem 4rem; }
+  .crumb { font-size: .9rem; margin-bottom: 1rem; }
+  h2.title { font-size: 1.4rem; margin-bottom: 1.4rem; }
+
+  .game { padding: 1.2rem 0 1.6rem; border-bottom: 1px solid #eeeae2; }
+  .game h3 { font-size: 1.2rem; display: inline; }
+  .game .date { font-family: 'Courier New', Courier, monospace; color: #a19b90; font-size: .84rem; margin-left: .7rem; }
+  .game .links { margin: .25rem 0 .8rem; font-size: .92rem; }
+  .game .links span { color: #ccc8c0; }
+  .imgs { display: flex; gap: 12px; flex-wrap: wrap; }
+  .imgs img { height: 230px; width: auto; background: #fff; border: 1px solid #ccc8c0; padding: 4px; cursor: pointer;
+    opacity: 0; transition: opacity .5s ease; }
+  .imgs img.loaded { opacity: 1; }
+
+  #lightbox { position: fixed; inset: 0; z-index: 100; background: rgba(20,18,14,.92);
+    display: none; align-items: center; justify-content: center; cursor: pointer; }
+  #lightbox.active { display: flex; }
+  #lightbox img { max-width: 90vw; max-height: 88vh; object-fit: contain; background: #fff; padding: 5px; }
+
+  footer { text-align: center; padding: 0 1rem 3rem; font-family: 'Courier New', Courier, monospace;
+    color: #b5afa4; font-size: .8rem; }
+
+  @media (max-width: 640px) {
+    .masthead h1 { font-size: 1.9rem; }
+    nav.bar a { padding: .45rem .9rem; font-size: .95rem; }
+    .imgs img { height: 170px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead"><h1><a href="/">Andy Ye</a></h1></header>
+<nav class="bar">
+  <ul>
+    <li><a href="/">home</a></li>
+    <li><a href="/blog-archive">blog</a></li>
+    <li><a href="/cs">projects/research</a></li>
+    <li><a class="here" href="/creative">creative</a></li>
+    <li><a href="/cv">cv</a></li>
+  </ul>
+</nav>
+
+<main>
+  <p class="crumb"><a href="/creative">&larr; creative</a></p>
+  <h2 class="title">card games</h2>
+
+  <div class="game">
+    <h3>Space Marines</h3><span class="date">august 2025</span>
+    <div class="links">[<a href="/card_games/space_marines_08-25/space_marines.pdf" target="_blank">cards pdf</a>] <span>·</span> [<a href="/card_games/space_marines_08-25/space_marines_rules_early.pdf" target="_blank">rules pdf</a>]</div>
+    <div class="imgs">
+      <img src="/card_games/space_marines_08-25/space_marines_1.jpg" alt="Space Marines" onclick="openLB(this)">
+      <img src="/card_games/space_marines_08-25/space_marines_2.jpg" alt="Space Marines 2" onclick="openLB(this)">
+    </div>
+  </div>
+
+  <div class="game">
+    <h3>Monty</h3><span class="date">march 2026</span>
+    <div class="imgs">
+      <img src="/card_games/monty_03-26/monty_1.jpg" alt="Monty" onclick="openLB(this)">
+    </div>
+  </div>
+
+  <div class="game">
+    <h3>Tyranny</h3><span class="date">june 2024</span>
+    <div class="imgs">
+      <img src="/card_games/tyranny_06-2024/image0.jpg" alt="Tyranny" onclick="openLB(this)">
+      <img src="/card_games/tyranny_06-2024/image1.jpg" alt="Tyranny 2" onclick="openLB(this)">
+    </div>
+  </div>
+
+  <div class="game">
+    <h3>Yellow Wallpaper</h3><span class="date">april 2023</span>
+    <div class="links">[<a href="/card_games/yellow_wallpaper_04-2023/Yellow_wallpaper.pdf" target="_blank">pdf</a>]</div>
+  </div>
+</main>
+
+<footer>© 2026 andy ye · seattle, wa</footer>
+
+<div id="lightbox" onclick="closeLB()"><img id="lb-img" src="" alt=""></div>
+<script>
+function openLB(img){ document.getElementById('lb-img').src=img.src; document.getElementById('lightbox').classList.add('active'); }
+function closeLB(){ document.getElementById('lightbox').classList.remove('active'); }
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeLB(); });
+document.querySelectorAll('.imgs img').forEach(img=>{
+  if(img.complete) img.classList.add('loaded');
+  else img.addEventListener('load', ()=> img.classList.add('loaded'));
+});
+</script>
+</body>
+</html>

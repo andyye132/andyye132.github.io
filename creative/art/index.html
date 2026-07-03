@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oil Painting — Andy Ye</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #fbfaf6; color: #1d1d1b; font-family: Georgia, 'Times New Roman', serif; font-size: 16.5px; line-height: 1.75; }
+  ::selection { background: #1c3aa9; color: #fff; }
+  a { color: #1c3aa9; }
+
+  .masthead { text-align: center; padding: 2.6rem 1rem 1.3rem; }
+  .masthead h1 { font-size: 2.5rem; font-weight: 700; color: #a09b92; letter-spacing: .02em; }
+  .masthead h1 a { color: inherit; text-decoration: none; }
+
+  nav.bar { border-top: 3px solid #ccc8c0; border-bottom: 3px solid #ccc8c0; background: #fffefb; }
+  nav.bar ul { list-style: none; display: flex; justify-content: space-around; flex-wrap: wrap; max-width: 780px; margin: 0 auto; }
+  nav.bar a { display: block; padding: .5rem 1.6rem; color: #1c3aa9; font-size: 1.05rem; text-decoration: none; }
+  nav.bar a:hover { text-decoration: underline; }
+  nav.bar .here { font-weight: 700; }
+
+  main { max-width: 940px; margin: 0 auto; padding: 2.5rem 1.4rem 4rem; }
+  .crumb { font-size: .9rem; margin-bottom: 1rem; }
+  h2.title { font-size: 1.4rem; margin-bottom: .2rem; }
+  .note { font-style: italic; color: #8d887e; font-size: .95rem; margin-bottom: 1.8rem; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 18px; }
+  figure { cursor: pointer; }
+  figure img { display: block; width: 100%; background: #fff; border: 1px solid #ccc8c0; padding: 4px;
+    opacity: 0; transition: opacity .5s ease; }
+  figure img.loaded { opacity: 1; }
+  figcaption { font-family: 'Courier New', Courier, monospace; color: #a19b90; font-size: .8rem;
+    text-align: center; padding-top: .25rem; }
+
+  /* lightbox */
+  #lightbox { position: fixed; inset: 0; z-index: 100; background: rgba(20,18,14,.92);
+    display: none; align-items: center; justify-content: center; cursor: pointer; }
+  #lightbox.active { display: flex; }
+  #lightbox img { max-width: 90vw; max-height: 88vh; object-fit: contain; background: #fff; padding: 5px; }
+  #lightbox .lb-caption { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+    color: #d8d2c6; font-family: 'Courier New', Courier, monospace; font-size: .85rem; }
+
+  footer { text-align: center; padding: 0 1rem 3rem; font-family: 'Courier New', Courier, monospace;
+    color: #b5afa4; font-size: .8rem; }
+
+  @media (max-width: 640px) {
+    .masthead h1 { font-size: 1.9rem; }
+    nav.bar a { padding: .45rem .9rem; font-size: .95rem; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead"><h1><a href="/">Andy Ye</a></h1></header>
+<nav class="bar">
+  <ul>
+    <li><a href="/">home</a></li>
+    <li><a href="/blog-archive">blog</a></li>
+    <li><a href="/cs">projects/research</a></li>
+    <li><a class="here" href="/creative">creative</a></li>
+    <li><a href="/cv">cv</a></li>
+  </ul>
+</nav>
+
+<main>
+  <p class="crumb"><a href="/creative">&larr; creative</a></p>
+  <h2 class="title">oil painting</h2>
+  <p class="note">* this was my last gallery before finishing high school. better images of art to come… at some point.</p>
+
+  <div class="grid">
+    <figure onclick="openLB(this)"><img src="/art/Landscape/shuksan.jpg" alt="shuksan" loading="lazy"><figcaption>shuksan</figcaption></figure>
+    <figure onclick="openLB(this)"><img src="/art/Everything Else/cycles.jpg" alt="cycles" loading="lazy"><figcaption>cycles</figcaption></figure>
+    <figure onclick="openLB(this)"><img src="/art/Boats 2/sunburnt.jpg" alt="sunburnt" loading="lazy"><figcaption>sunburnt</figcaption></figure>
+    <figure onclick="openLB(this)"><img src="/art/Landscape/midas.jpg" alt="midas" loading="lazy"><figcaption>midas</figcaption></figure>
+    <figure onclick="openLB(this)"><img src="/art/Landscape/haystack.jpg" alt="haystack" loading="lazy"><figcaption>haystack</figcaption></figure>
+    <figure onclick="openLB(this)"><img src="/art/Everything Else/zookeeper.jpg" alt="zookeeper" loading="lazy"><figcaption>zookeeper</figcaption></figure>
+    <figure onclick="openLB(this)"><img src="/art/Boats 2/nautilus.jpg" alt="nautilus" loading="lazy"><figcaption>nautilus</figcaption></figure>
+    <figure onclick="openLB(this)"><img src="/art/Landscape/monet mimicry.jpg" alt="monet mimicry" loading="lazy"><figcaption>monet mimicry</figcaption></figure>
+    <figure onclick="openLB(this)"><img src="/art/Landscape/canopy.jpg" alt="canopy" loading="lazy"><figcaption>canopy</figcaption></figure>
+    <figure onclick="openLB(this)"><img src="/art/Landscape/at the toes of titans.jpg" alt="at the toes of titans" loading="lazy"><figcaption>at the toes of titans</figcaption></figure>
+    <figure onclick="openLB(this)"><img src="/art/Boats 2/godspeed.jpg" alt="godspeed" loading="lazy"><figcaption>godspeed</figcaption></figure>
+    <figure onclick="openLB(this)"><img src="/art/Everything Else/eruption.jpg" alt="eruption" loading="lazy"><figcaption>eruption</figcaption></figure>
+    <figure onclick="openLB(this)"><img src="/art/Landscape/steambug.jpg" alt="steambug" loading="lazy"><figcaption>steambug</figcaption></figure>
+    <figure onclick="openLB(this)"><img src="/art/Boats 2/seagull.jpg" alt="seagull" loading="lazy"><figcaption>seagull</figcaption></figure>
+    <figure onclick="openLB(this)"><img src="/art/Landscape/reflections.jpg" alt="reflections" loading="lazy"><figcaption>reflections</figcaption></figure>
+    <figure onclick="openLB(this)"><img src="/art/Boats 2/lagoon.jpg" alt="lagoon" loading="lazy"><figcaption>lagoon</figcaption></figure>
+    <figure onclick="openLB(this)"><img src="/art/Everything Else/20th anniversary.jpg" alt="20th anniversary" loading="lazy"><figcaption>20th anniversary</figcaption></figure>
+  </div>
+</main>
+
+<footer>© 2026 andy ye · seattle, wa</footer>
+
+<div id="lightbox" onclick="closeLB()">
+  <img id="lb-img" src="" alt="">
+  <div class="lb-caption" id="lb-cap"></div>
+</div>
+
+<script>
+function openLB(el){
+  const img = el.querySelector('img');
+  const cap = el.querySelector('figcaption');
+  document.getElementById('lb-img').src = img.src;
+  document.getElementById('lb-cap').textContent = cap ? cap.textContent : '';
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLB(){ document.getElementById('lightbox').classList.remove('active'); }
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeLB(); });
+document.querySelectorAll('figure img').forEach(img=>{
+  if(img.complete) img.classList.add('loaded');
+  else img.addEventListener('load', ()=> img.classList.add('loaded'));
+});
+</script>
+</body>
+</html>

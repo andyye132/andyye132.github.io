@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EXPOSURE THERAPY — Andy Ye</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #fbfaf6; color: #1d1d1b; font-family: Georgia, 'Times New Roman', serif; font-size: 16.5px; line-height: 1.75; }
+  ::selection { background: #1c3aa9; color: #fff; }
+  a { color: #1c3aa9; }
+
+  .masthead { text-align: center; padding: 2.6rem 1rem 1.3rem; }
+  .masthead h1 { font-size: 2.5rem; font-weight: 700; color: #a09b92; letter-spacing: .02em; }
+  .masthead h1 a { color: inherit; text-decoration: none; }
+
+  nav.bar { border-top: 3px solid #ccc8c0; border-bottom: 3px solid #ccc8c0; background: #fffefb; }
+  nav.bar ul { list-style: none; display: flex; justify-content: space-around; flex-wrap: wrap; max-width: 780px; margin: 0 auto; }
+  nav.bar a { display: block; padding: .5rem 1.6rem; color: #1c3aa9; font-size: 1.05rem; text-decoration: none; }
+  nav.bar a:hover { text-decoration: underline; }
+  nav.bar .here { font-weight: 700; }
+
+  main { max-width: 720px; margin: 0 auto; padding: 2.5rem 1.4rem 4rem; }
+  .crumb { font-size: .9rem; margin-bottom: 1rem; }
+  h2.title { font-size: 1.6rem; margin-bottom: .2rem; }
+  .sub { font-style: italic; color: #8d887e; margin-bottom: 1.4rem; }
+
+  .pitchbox { background: #fffefb; border: 1px solid #ddd8cf; padding: 1rem 1.2rem; margin-bottom: 2rem; }
+  .pitchbox p { margin-bottom: .6rem; }
+  .pitchbox ul { margin: 0 0 .6rem 1.4rem; }
+  .pitchbox li { margin-bottom: .4rem; }
+
+  h3.sec { font-size: 1.3rem; font-weight: 700; margin: 2rem 0 .8rem; border-bottom: 1px solid #ddd8cf; padding-bottom: .35rem; }
+  .prose p { margin-bottom: 1.1rem; }
+  .prose ul { margin: 0 0 1.1rem 1.5rem; }
+  .prose li { margin-bottom: .4rem; }
+  .prose ul ul { margin-top: .4rem; margin-bottom: .4rem; }
+  figure { margin: 1.4rem 0; }
+  figure img { display: block; width: 100%; background: #fff; border: 1px solid #ccc8c0; padding: 4px; }
+  figcaption { font-family: 'Courier New', Courier, monospace; color: #a19b90; font-size: .8rem;
+    font-style: italic; text-align: center; padding-top: .3rem; }
+
+  footer { text-align: center; padding: 0 1rem 3rem; font-family: 'Courier New', Courier, monospace;
+    color: #b5afa4; font-size: .8rem; }
+
+  @media (max-width: 640px) {
+    .masthead h1 { font-size: 1.9rem; }
+    nav.bar a { padding: .45rem .9rem; font-size: .95rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead"><h1><a href="/">Andy Ye</a></h1></header>
+<nav class="bar">
+  <ul>
+    <li><a href="/">home</a></li>
+    <li><a href="/blog-archive">blog</a></li>
+    <li><a class="here" href="/cs">projects/research</a></li>
+    <li><a href="/creative">creative</a></li>
+    <li><a href="/cv">cv</a></li>
+  </ul>
+</nav>
+
+<main>
+  <p class="crumb"><a href="/cs/gamedev">&larr; game development</a></p>
+  <h2 class="title">CURRENT: EXPOSURE THERAPY</h2>
+  <p class="sub">a game that teaches you to regulate your emotions</p>
+
+  <div class="pitchbox">
+    <p>Making a horror game which gets scarier and more difficult dependent on your heart rate.</p>
+    <ul>
+      <li>Using UbiComp's <a href="https://github.com/ubicomplab/rPPG-Toolbox" target="_blank">rPPG toolkit</a> (ML), we can measure heartrate with just a camera!</li>
+      <li>The player will be forced to learn to calm their nerves quickly in uneasy situations. The skill is then in calming yourself, rather than memorizing mechanics. This makes for an interesting game loop.</li>
+    </ul>
+  </div>
+
+  <div class="prose">
+    <h3 class="sec">Intro</h3>
+    <p>Horror games are getting more interactive; the base of looking at your screen and clicking around in a 1st person view is not as appealing anymore. So games get creative. Games like yapyap or lethal company utilize your microphone. If you make noise, then enemies may be alerted to you. To make sure you actually make noise, they also have proximity chat, which allows for funny interactions with friends, but also makes it harder for you to not react to scary things — since you've already been in a talking mood.</p>
+    <p>This genre has been growing further, and further. And beyond just the microphone, too. Games like nevermind support heart rate sensors, with heart rate affecting the game the most. Other games like <a href="https://store.steampowered.com/app/3817090/Vigil/" target="_blank">vigil</a> use your camera to track if you are blinking or not.</p>
+
+    <figure>
+      <img src="/Pages/Projects/exposure_therapy/vigil.jpg" alt="Vigil — it doesn't move if you're looking at it" loading="lazy">
+      <figcaption>it doesn't move if you're looking at it</figcaption>
+    </figure>
+
+    <p>Heart rate measurement is one of the most accurate method of stress measurement. It is hard to fake your heart beating slowly. However, games like nevermind have a barrier of entry that the user must have a compatible wearable heart monitor, then set it up with their computer. This makes for a large task which many players just simply do not care enough about setting up.</p>
+
+    <figure>
+      <img src="/Pages/Projects/exposure_therapy/dtm.jpg" alt="Measure your heart rate with Wi-Fi — DTM" loading="lazy">
+      <figcaption>DTM</figcaption>
+    </figure>
+
+    <h3 class="sec">pitch</h3>
+    <p>Ubicomp published a <a href="https://github.com/ubicomplab/rPPG-Toolbox" target="_blank">rPPG toolbox</a>, which can determine your heart rate from a camera.</p>
+    <ul>
+      <li>I have a rudamentary implementation on my computer which tracks cheeks, this <strong>works real time</strong>. generally it is accurate, but we can be smart about it and track deltas instead of actual heart rate.</li>
+    </ul>
+    <p>Most PC's contain a webcam, or players are okay with getting a webcam for a horror game which is made well and uses it (vigil had over 59,500 concurrent players). So the barrier of entry of having wearable trackers is far less of a problem.</p>
+
+    <p>My idea is to make a game which scales in difficulty based on your heart rate. This is how the game loop would go; the player spawns in, tries to beat lvl 1, gets scared and dies early. The next time they play, they make it a little further (since they've seen this world before already, less off-putting to them) but they still die when they get stressed again. And this repeats, they get further and further, and learn more and more, and get better at managing their calm.</p>
+
+    <figure>
+      <img src="/Pages/Projects/exposure_therapy/gameloop.jpg" alt="Game loop — noob to god progression" loading="lazy">
+      <figcaption>Game loop</figcaption>
+    </figure>
+
+    <p>The skill gained is thus in reacting with calm to stressful environments IN REAL LIFE. You can't fake your heart rate! <strong>Beating this game should unironically make you better at handling stress.</strong> And I think that is really cool.</p>
+
+    <p>we can also try to predict your respiration pattern (??????)</p>
+    <ul>
+      <li>need to test how it would be if a person held their breath really fast.</li>
+      <li>can we tell if people hold breath?</li>
+      <li>i will test this later today</li>
+    </ul>
+
+    <p><strong>this game would have to be done reallllyyy well</strong><br>
+    but i genuienly have hope with this idea. i think it's super unique, and the research &rarr; game industry gap is here.</p>
+
+    <p><strong>this will be the storyline idea:</strong></p>
+    <ul>
+      <li>you are in therapy, and you have to talk through every single one of your greatest fears. every time your therapist brings one up, your mind warps into a world which exaggerates them…</li>
+      <li>each fear is a level. thats toough as hell
+        <ul>
+          <li>loneliness
+            <ul><li>liminal world where</li></ul>
+          </li>
+          <li>claustrophobia
+            <ul><li>the walls keep closing in</li></ul>
+          </li>
+          <li>purposelessness
+            <ul><li>idk how to do this one but it should be really important</li></ul>
+          </li>
+          <li>not being enough
+            <ul><li>a series of stressful events, impossible tasks</li></ul>
+          </li>
+          <li>social anxiety
+            <ul><li>perform in front of a stage of jeering judges in a horror atmosphere…</li><li>harsh critics</li></ul>
+          </li>
+          <li>death
+            <ul><li>strapped to electric chair idk</li></ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</main>
+
+<footer>© 2026 andy ye · seattle, wa</footer>
+
+</body>
+</html>

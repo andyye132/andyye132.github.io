@@ -1,0 +1,21 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 Title: Bernoulli LSE for Efficient CFF Detection with Beacon\
+Working With: Richard Li (lichard49.github.io)\
+\
+Current real-world robotic navigation models rely on simulated data because high-quality, well-formatted real data is sparse. My project addresses this gap by building an automated pipeline to convert real estate walkthrough videos into training data for embodied AI navigation. \
+\
+The pipeline currently processes RealEstate10K, a dataset of 10,000 house tour videos, into 125,000+ streamlined clips with associated camera trajectories and depth maps. First, raw videos are segmented into clips using PySceneDetect, detecting transitions and ensuring each clip contains continuous camera movement. \
+\
+Second, each clip is processed through VGGT (Visual Geometry Grounded Transformer) to extract 3D reconstruction data, including per-frame depth maps and camera extrinsics. \
+\
+Third, I developed a trajectory extraction algorithm that identifies navigable camera paths for each clip. The algorithm selects potential destination frames, then verifies that the destination point remains visible throughout the trajectory by projecting it into each frame and checking for occlusion using depth maps. The longest continuous segment where the destination stays in view becomes the extracted trajectory. \
+\
+Fourth, I implemented floor-point detection via ray-casting. For each trajectory, the algorithm shoots a ray downward from the endpoint camera position and identifies the floor plane by detecting point cloud density within a cylindrical region, extracting walkable destination coordinates for navigation targets. \
+\
+The resulting dataset provides real-world navigation trajectories with ground-truth depth and camera poses, which will help ground robotic navigation with reality. The pipeline is designed to scale, and we are currently working on adapting it to POV videos in general, so that robots can reliably move outside.}

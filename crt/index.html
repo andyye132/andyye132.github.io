@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>boot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --green:#4dffa0;          /* phosphor */
+    --green-dim:#1d6b46;
+    --bezel:#15161a;
+    --bezel-edge:#2a2c33;
+    --accent:#a8c7fa;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;background:#000;overflow:hidden;cursor:default;
+    font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace}
+
+  /* ---- world behind the monitor ---- */
+  #world{position:fixed;inset:0;width:100%;height:100%;z-index:0;
+    filter:blur(1px) brightness(.92) saturate(1);transition:filter .5s ease}
+  #world-dim{position:fixed;inset:0;z-index:1;background:radial-gradient(120% 120% at 50% 45%,
+    rgba(2,4,8,.28) 0%, rgba(2,4,8,.5) 62%, rgba(0,0,0,.78) 100%);
+    transition:opacity .5s ease;opacity:1}
+
+  /* ---- monitor ---- */
+  #stage{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;
+    perspective:1400px}
+  #monitor{position:relative;width:min(64vmin,760px);aspect-ratio:4/3.25;
+    background:linear-gradient(160deg,#202228,#0e0f12 60%);
+    border-radius:26px;padding:5.2% 5.2% 7.5%;
+    box-shadow:
+      0 2px 0 rgba(255,255,255,.04) inset,
+      0 -30px 60px rgba(0,0,0,.5) inset,
+      0 40px 90px rgba(0,0,0,.7),
+      0 0 0 1px #000;
+    transform:rotateX(.5deg)}
+  #monitor::after{ /* power LED */
+    content:"";position:absolute;bottom:2.6%;left:50%;transform:translateX(-50%);
+    width:7px;height:7px;border-radius:50%;background:#143; box-shadow:0 0 2px #000 inset}
+  #monitor.on::after{background:var(--green);box-shadow:0 0 8px var(--green)}
+
+  #bezel{position:relative;width:100%;height:100%;border-radius:14px;
+    background:#000;overflow:hidden;
+    box-shadow:0 0 0 2px #000, 0 0 22px rgba(0,0,0,.9) inset}
+  /* curved glass */
+  #screen{position:absolute;inset:0;border-radius:14px/12px;overflow:hidden;
+    background:radial-gradient(130% 130% at 50% 50%, #07120d 0%, #030604 78%, #000 100%)}
+  #crt{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+  /* ---- CRT overlays ---- */
+  .ov{position:absolute;inset:0;pointer-events:none}
+  #scanlines{background:repeating-linear-gradient(to bottom,
+      rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0,0,0,.28) 3px, rgba(0,0,0,0) 4px);
+      mix-blend-mode:multiply;opacity:.7}
+  #mask{background:linear-gradient(90deg, rgba(255,0,0,.06), rgba(0,255,0,.04), rgba(0,0,255,.06));
+      background-size:3px 100%;mix-blend-mode:overlay;opacity:.5}
+  #vignette{background:radial-gradient(120% 120% at 50% 50%,
+      rgba(0,0,0,0) 55%, rgba(0,0,0,.5) 85%, rgba(0,0,0,.85) 100%)}
+  #glare{background:radial-gradient(60% 40% at 32% 22%, rgba(255,255,255,.06), rgba(255,255,255,0) 60%)}
+  #flicker{background:#0b1f16;mix-blend-mode:screen;opacity:0;animation:fl .12s steps(2) infinite}
+  @keyframes fl{0%{opacity:.015}50%{opacity:.04}100%{opacity:.02}}
+  #roll{position:absolute;left:0;right:0;height:14%;
+    background:linear-gradient(to bottom, rgba(255,255,255,0), rgba(180,255,220,.05), rgba(255,255,255,0));
+    mix-blend-mode:screen;opacity:.6;animation:roll 7s linear infinite}
+  @keyframes roll{0%{top:-15%}100%{top:115%}}
+
+  /* power-on flash (CRT turn-on) */
+  #flash{position:absolute;inset:0;pointer-events:none;background:#dfffe9;opacity:0}
+  #monitor.powering #flash{animation:pwr .55s ease-out forwards}
+  @keyframes pwr{
+    0%{opacity:0;transform:scaleY(.004);filter:brightness(3)}
+    8%{opacity:1;transform:scaleY(.004)}
+    45%{opacity:.9;transform:scaleY(1)}
+    100%{opacity:0;transform:scaleY(1)}}
+
+  /* ---- hints / ui ---- */
+  #poweron{position:absolute;left:50%;bottom:14%;transform:translateX(-50%);
+    color:var(--green);font-size:13px;letter-spacing:2px;opacity:.0;
+    text-shadow:0 0 8px var(--green);animation:pulse 1.8s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.25}50%{opacity:.8}}
+  #tip{position:fixed;z-index:40;pointer-events:none;color:var(--green);
+    font-size:11px;letter-spacing:1px;text-shadow:0 0 6px var(--green);
+    transform:translate(-50%,-180%);opacity:0;transition:opacity .15s;white-space:nowrap}
+  #mute{position:fixed;right:16px;bottom:14px;z-index:50;color:#3a5;font-size:11px;
+    letter-spacing:1px;cursor:pointer;opacity:.5;user-select:none}
+  #mute:hover{opacity:1}
+
+  /* full-screen transition on choice */
+  #xfade{position:fixed;inset:0;z-index:100;pointer-events:none;opacity:0;background:#eafff3}
+  #xlabel{position:fixed;inset:0;z-index:101;display:flex;align-items:center;justify-content:center;
+    color:#0a0e14;font-size:18px;letter-spacing:3px;opacity:0;pointer-events:none}
+</style>
+</head>
+<body>
+  <canvas id="world"></canvas>
+  <div id="world-dim"></div>
+
+  <div id="stage">
+    <div id="monitor">
+      <div id="bezel">
+        <div id="screen">
+          <canvas id="crt"></canvas>
+          <div class="ov" id="mask"></div>
+          <div class="ov" id="scanlines"></div>
+          <div class="ov" id="roll"></div>
+          <div class="ov" id="glare"></div>
+          <div class="ov" id="flicker"></div>
+          <div class="ov" id="vignette"></div>
+          <div id="flash"></div>
+          <div id="poweron">▷ click to power on</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tip"></div>
+  <div id="mute">♪ sound on</div>
+  <div id="xfade"></div>
+  <div id="xlabel"></div>
+
+<script>
+/* ============================================================
+   CRT boot prototype  —  2D vibe mock (no dependencies)
+   States: off → powering → booting → ready
+   ============================================================ */
+const GREEN='#4dffa0';
+const SCRIPT=[
+  {t:'line', s:'> welcome'},
+  {t:'pause', ms:450},
+  {t:'blank'},
+  {t:'line', s:'> if you would like the standard view,'},
+  {t:'line', s:'> please click this screen'},
+  {t:'blank'},
+  {t:'line', s:'> if you would like to go on an adventure,'},
+  {t:'line', s:'> please click the world behind this screen'},
+];
+const TYPE_MS=46, TYPE_JITTER=26;   // per-character cadence
+
+let state='off';
+let displayed=[''];                  // lines currently shown on screen
+let cursorOn=true;
+
+/* ---------- screen canvas ---------- */
+const crt=document.getElementById('crt'), cx=crt.getContext('2d');
+let SW=0, SH=0, dpr=1, fontPx=18, lineH=26, padX=26, padY=24;
+function sizeScreen(){
+  const r=crt.getBoundingClientRect();
+  dpr=Math.min(window.devicePixelRatio||1,2);
+  SW=r.width; SH=r.height;
+  crt.width=SW*dpr; crt.height=SH*dpr;
+  cx.setTransform(dpr,0,0,dpr,0,0);
+  fontPx=Math.max(13,Math.round(SW/30));
+  lineH=Math.round(fontPx*1.55);
+  padX=Math.round(SW*0.05); padY=Math.round(SH*0.10);
+}
+
+/* ---------- world backdrop (faint isometric hint) ---------- */
+const wc=document.getElementById('world'), wx=wc.getContext('2d');
+function drawWorld(){
+  const w=wc.width=innerWidth, h=wc.height=innerHeight;
+  // night-sky base + soft glow where the island sits
+  wx.fillStyle='#05070c'; wx.fillRect(0,0,w,h);
+  let gl=wx.createRadialGradient(w/2,h*0.55,40,w/2,h*0.55,Math.max(w,h)*0.6);
+  gl.addColorStop(0,'rgba(40,60,100,.28)'); gl.addColorStop(1,'rgba(5,7,12,0)');
+  wx.fillStyle=gl; wx.fillRect(0,0,w,h);
+  const TW=54,TH=27,ox=w/2,oy=h*0.60;
+  // ground diamonds (an island)
+  for(let gy=-7;gy<11;gy++)for(let gx=-11;gx<11;gx++){
+    if(Math.abs(gx)+Math.abs(gy)>15)continue;            // round island edge
+    const x=ox+(gx-gy)*TW/2, y=oy+(gx+gy)*TH/2;
+    if(y<-60||y>h+60)continue;
+    wx.beginPath();
+    wx.moveTo(x,y-TH/2);wx.lineTo(x+TW/2,y);wx.lineTo(x,y+TH/2);wx.lineTo(x-TW/2,y);wx.closePath();
+    wx.fillStyle=((gx+gy)&1)?'#0c131e':'#0e1726'; wx.fill();
+    wx.strokeStyle='rgba(120,150,200,.06)'; wx.stroke();
+  }
+  // buildings with lit pastel-blue windows
+  const blds=[[-4,-2,4],[2,-1,5],[-1,2,3],[4,1,4],[-3,4,3],[1,5,2],[6,2,3],
+              [-7,1,3],[7,-2,2],[0,-4,3],[-2,-5,2],[3,7,2],[-6,6,3]];
+  for(const [gx,gy,bh] of blds){
+    const x=ox+(gx-gy)*TW/2, y=oy+(gx+gy)*TH/2, H=bh*18;
+    wx.fillStyle='#101a2b'; wx.fillRect(x-TW/2,y-H,TW/2,H+TH/2);   // left wall
+    wx.fillStyle='#0b1320'; wx.fillRect(x,y-H,TW/2,H+TH/2);        // right wall
+    // windows
+    for(let r=0;r<bh;r++){
+      if(Math.random()<.5){ wx.fillStyle='rgba(168,199,250,.55)';
+        wx.fillRect(x-TW/2+6,y-H+10+r*18,6,7); }
+      if(Math.random()<.4){ wx.fillStyle='rgba(168,199,250,.35)';
+        wx.fillRect(x+6,y-H+10+r*18,6,7); }
+    }
+    // roof
+    wx.beginPath();wx.moveTo(x,y-H-TH/2);wx.lineTo(x+TW/2,y-H);wx.lineTo(x,y-H+TH/2);wx.lineTo(x-TW/2,y-H);wx.closePath();
+    wx.fillStyle='#1a2b44';wx.fill();
+    wx.strokeStyle='rgba(168,199,250,.3)';wx.stroke();
+  }
+}
+
+/* ---------- audio (Web Audio, synthesized) ---------- */
+let actx=null, master=null, hum=null, muted=false;
+function audioInit(){
+  if(actx) return;
+  actx=new (window.AudioContext||window.webkitAudioContext)();
+  master=actx.createGain(); master.gain.value=0.9; master.connect(actx.destination);
+}
+function playKey(soft){
+  if(!actx||muted) return;
+  const t=actx.currentTime, dur=0.03;
+  const buf=actx.createBuffer(1,Math.ceil(actx.sampleRate*dur),actx.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2);
+  const src=actx.createBufferSource(); src.buffer=buf;
+  const bp=actx.createBiquadFilter(); bp.type='bandpass';
+  bp.frequency.value=soft?900:1500+Math.random()*700; bp.Q.value=0.9;
+  const g=actx.createGain(); g.gain.value=soft?0.05:0.10;
+  src.connect(bp).connect(g).connect(master); src.start(t); src.stop(t+dur);
+  const o=actx.createOscillator(); o.type='triangle';
+  o.frequency.value=soft?210:300+Math.random()*130;
+  const og=actx.createGain();
+  og.gain.setValueAtTime(soft?0.04:0.07,t);
+  og.gain.exponentialRampToValueAtTime(0.0001,t+0.025);
+  o.connect(og).connect(master); o.start(t); o.stop(t+0.03);
+}
+function playPowerOn(){
+  if(!actx||muted) return;
+  const t=actx.currentTime;
+  const o=actx.createOscillator(); o.type='sine';
+  o.frequency.setValueAtTime(120,t); o.frequency.exponentialRampToValueAtTime(42,t+0.4);
+  const g=actx.createGain();
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.34,t+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+0.5);
+  o.connect(g).connect(master); o.start(t); o.stop(t+0.55);
+  const dur=0.5, buf=actx.createBuffer(1,Math.ceil(actx.sampleRate*dur),actx.sampleRate);
+  const dd=buf.getChannelData(0);
+  for(let i=0;i<dd.length;i++) dd[i]=(Math.random()*2-1)*Math.pow(1-i/dd.length,1.5);
+  const s=actx.createBufferSource(); s.buffer=buf;
+  const hp=actx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=2200;
+  const sg=actx.createGain(); sg.gain.value=0.06;
+  s.connect(hp).connect(sg).connect(master); s.start(t); s.stop(t+dur);
+  const w=actx.createOscillator(); w.type='sine';
+  w.frequency.setValueAtTime(15000,t); w.frequency.exponentialRampToValueAtTime(8000,t+0.3);
+  const wg=actx.createGain();
+  wg.gain.setValueAtTime(0.025,t); wg.gain.exponentialRampToValueAtTime(0.0001,t+0.35);
+  w.connect(wg).connect(master); w.start(t); w.stop(t+0.4);
+}
+function startHum(){
+  if(!actx||hum||muted) return;
+  hum=actx.createOscillator(); hum.type='sine'; hum.frequency.value=60;
+  const hg=actx.createGain(); hg.gain.value=0.012;
+  hum.connect(hg).connect(master); hum.start();
+}
+
+/* ---------- boot sequence ---------- */
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function runBoot(){
+  state='booting';
+  displayed=[];
+  for(const step of SCRIPT){
+    if(step.t==='pause'){ await sleep(step.ms); continue; }
+    if(step.t==='blank'){ displayed.push(''); await sleep(160); continue; }
+    // type a line
+    displayed.push('');
+    const i=displayed.length-1;
+    for(const ch of step.s){
+      displayed[i]+=ch;
+      playKey(ch===' ');
+      await sleep(TYPE_MS+Math.random()*TYPE_JITTER);
+    }
+    await sleep(240);
+  }
+  state='ready';
+}
+
+/* ---------- render loop ---------- */
+function render(){
+  cx.clearRect(0,0,SW,SH);
+  // faint phosphor noise so a powered screen feels alive
+  if(state!=='off'){
+    const n=(state==='powering')?90:14;
+    cx.save(); cx.globalAlpha=0.06;
+    for(let k=0;k<n;k++){
+      cx.fillStyle=Math.random()<.5?'#0a1a12':'#13301f';
+      cx.fillRect(Math.random()*SW,Math.random()*SH,2,2);
+    }
+    cx.restore();
+  }
+  // green text — bloom pass (blurred halo) then crisp core
+  cx.font=`${fontPx}px 'JetBrains Mono', monospace`;
+  cx.textBaseline='top';
+  for(let pass=0;pass<2;pass++){
+    cx.shadowColor=GREEN; cx.shadowBlur=pass===0?18:6;
+    cx.fillStyle=pass===0?'rgba(77,255,160,.55)':GREEN;
+    let y=padY;
+    for(const line of displayed){ cx.fillText(line,padX,y); y+=lineH; }
+  }
+  // cursor
+  const last=displayed.length?displayed[displayed.length-1]:'';
+  if((state==='booting'||state==='ready') && cursorOn){
+    const cxpos=padX+cx.measureText(last).width+3;
+    const cy=padY+(displayed.length-1)*lineH;
+    cx.shadowColor=GREEN; cx.shadowBlur=10; cx.fillStyle=GREEN;
+    cx.fillRect(cxpos,cy,fontPx*0.55,fontPx);
+  }
+  cx.shadowBlur=0;
+  requestAnimationFrame(render);
+}
+setInterval(()=>{cursorOn=!cursorOn;},480);
+
+/* ---------- interaction ---------- */
+const monitor=document.getElementById('monitor');
+const screenEl=document.getElementById('screen');
+const worldDim=document.getElementById('world-dim');
+const tip=document.getElementById('tip');
+function inScreen(e){
+  const r=screenEl.getBoundingClientRect();
+  return e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;
+}
+function powerOn(){
+  audioInit();
+  if(actx.state==='suspended') actx.resume();
+  state='powering';
+  monitor.classList.add('powering','on');
+  document.getElementById('poweron').style.display='none';
+  playPowerOn(); startHum();
+  setTimeout(()=>{ runBoot(); }, 480);
+}
+async function choose(which){
+  if(state!=='ready') return;
+  state='done';
+  const xf=document.getElementById('xfade'), xl=document.getElementById('xlabel');
+  if(which==='standard'){
+    xf.style.background='#eafff3';
+    xf.style.transition='opacity .6s ease'; xf.style.opacity='1';
+    xl.textContent='→ standard view';
+    // TODO(real build): window.location.href='/site';
+  }else{
+    xf.style.background='#04100a';
+    xf.style.transition='opacity .6s ease'; xf.style.opacity='1';
+    xl.style.color='#4dffa0'; xl.textContent='→ entering the adventure…';
+    // TODO(real build): window.location.href='/site#world';
+  }
+  setTimeout(()=>{ xl.style.transition='opacity .5s'; xl.style.opacity='1'; },350);
+}
+document.addEventListener('pointerdown',e=>{
+  if(e.target.id==='mute') return;
+  if(state==='off'){ powerOn(); return; }
+  if(state==='ready'){ choose(inScreen(e)?'standard':'world'); }
+});
+document.addEventListener('pointermove',e=>{
+  if(state!=='ready'){ tip.style.opacity='0'; document.body.style.cursor='default'; return; }
+  const onScreen=inScreen(e);
+  worldDim.style.opacity = onScreen ? '1' : '0.28';
+  wc.style.filter = onScreen ? '' : 'blur(0px) brightness(1.18) saturate(1.1)';
+  document.body.style.cursor='pointer';
+  tip.style.left=e.clientX+'px'; tip.style.top=e.clientY+'px';
+  tip.textContent = onScreen ? 'open standard view' : 'enter the world ↵';
+  tip.style.opacity='1';
+});
+
+/* mute toggle */
+document.getElementById('mute').addEventListener('click',()=>{
+  muted=!muted;
+  document.getElementById('mute').textContent = muted ? '♪ sound off' : '♪ sound on';
+  if(master) master.gain.value = muted?0:0.9;
+});
+
+/* ---------- boot the page ---------- */
+function resizeAll(){ sizeScreen(); drawWorld(); }
+window.addEventListener('resize',resizeAll);
+(async ()=>{
+  try{ await document.fonts.ready; }catch(e){}
+  resizeAll();
+  document.getElementById('poweron').style.display='block';
+  render();
+})();
+</script>
+</body>
+</html>

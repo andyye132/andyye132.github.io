@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bristle — Andy Ye</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #fbfaf6; color: #1d1d1b; font-family: Georgia, 'Times New Roman', serif; font-size: 16.5px; line-height: 1.75; }
+  ::selection { background: #1c3aa9; color: #fff; }
+  a { color: #1c3aa9; }
+
+  .masthead { text-align: center; padding: 2.6rem 1rem 1.3rem; }
+  .masthead h1 { font-size: 2.5rem; font-weight: 700; color: #a09b92; letter-spacing: .02em; }
+  .masthead h1 a { color: inherit; text-decoration: none; }
+
+  nav.bar { border-top: 3px solid #ccc8c0; border-bottom: 3px solid #ccc8c0; background: #fffefb; }
+  nav.bar ul { list-style: none; display: flex; justify-content: space-around; flex-wrap: wrap; max-width: 780px; margin: 0 auto; }
+  nav.bar a { display: block; padding: .5rem 1.6rem; color: #1c3aa9; font-size: 1.05rem; text-decoration: none; }
+  nav.bar a:hover { text-decoration: underline; }
+  nav.bar .here { font-weight: 700; }
+
+  main { max-width: 780px; margin: 0 auto; padding: 2.5rem 1.4rem 4rem; }
+  .crumb { font-size: .9rem; margin-bottom: 1rem; }
+  h2.title { font-size: 1.55rem; line-height: 1.35; margin-bottom: .3rem; }
+  .sub { font-style: italic; color: #8d887e; margin-bottom: .8rem; }
+  .links { font-size: 1rem; margin-bottom: 1.6rem; }
+  .tags { font-family: 'Courier New', Courier, monospace; color: #a19b90; font-size: .84rem; margin: 1.2rem 0 1.8rem; }
+
+  .prose p { margin-bottom: 1.1rem; }
+  h3.sec { font-size: 1.05rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #8d887e;
+    border-bottom: 1px solid #ddd8cf; padding-bottom: .35rem; margin: 2rem 0 .9rem; }
+
+  .vidwrap { background: #fff; border: 1px solid #ccc8c0; padding: 4px; margin: 1.2rem 0; }
+  .vidwrap video { display: block; width: 100%; background: #000; }
+  .explorer { background: #fff; border: 1px solid #ccc8c0; padding: 4px; margin: 1.2rem 0; }
+  .explorer iframe { display: block; width: 100%; height: 720px; border: 0; background: #0f0f0f; }
+  .cap { font-family: 'Courier New', Courier, monospace; color: #a19b90; font-size: .8rem;
+    font-style: italic; text-align: center; margin-top: .35rem; }
+
+  footer { text-align: center; padding: 0 1rem 3rem; font-family: 'Courier New', Courier, monospace;
+    color: #b5afa4; font-size: .8rem; }
+
+  @media (max-width: 640px) {
+    .masthead h1 { font-size: 1.9rem; }
+    nav.bar a { padding: .45rem .9rem; font-size: .95rem; }
+    .explorer iframe { height: 520px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead"><h1><a href="/">Andy Ye</a></h1></header>
+<nav class="bar">
+  <ul>
+    <li><a href="/">home</a></li>
+    <li><a href="/blog-archive">blog</a></li>
+    <li><a class="here" href="/cs">projects/research</a></li>
+    <li><a href="/creative">creative</a></li>
+    <li><a href="/cv">cv</a></li>
+  </ul>
+</nav>
+
+<main>
+  <p class="crumb"><a href="/cs/research/robotics">&larr; robotics</a></p>
+  <h2 class="title">Bristle: A Filtering Pipeline for Real Life Household CV Navigation</h2>
+  <p class="sub">Allen Institute for AI (Ai2) · with Matt Wallingford · Oct 2025 — Present</p>
+  <p class="links">
+    demo: <a href="https://andyye.bio/bristle" target="_blank">andyye.bio/bristle</a><br>
+    data: <a href="https://huggingface.co/datasets/andyye132/bristle-trajectories" target="_blank">huggingface.co/datasets/andyye132/bristle-trajectories</a>
+  </p>
+
+  <div class="explorer">
+    <iframe src="https://andyye.bio/bristle/explorer.html" title="Bristle trajectory explorer"></iframe>
+  </div>
+  <p class="cap">interactive: pick a clip from the filmstrip — video + reconstructed 3d trajectory (<a href="https://andyye.bio/bristle/explorer.html" target="_blank">open full screen</a>)</p>
+
+  <div class="prose">
+    <p>Current real-world robotic navigation models rely on simulated data because high-quality, well-formatted real data is sparse. My project addresses this gap by building an automated pipeline to convert real estate walkthrough videos into training data for embodied AI navigation.</p>
+
+    <p>The pipeline currently processes RealEstate10K, a dataset of 10,000 house tour videos, into 125,000+ streamlined clips with associated camera trajectories and depth maps. First, raw videos are segmented into clips using PySceneDetect, detecting transitions and ensuring each clip contains continuous camera movement.</p>
+
+    <p>Each clip is processed through VGGT (Visual Geometry Grounded Transformer) to extract 3D reconstruction data, including per-frame depth maps and camera extrinsics.</p>
+
+    <p>I developed a trajectory extraction algorithm that identifies navigable camera paths for each clip. The algorithm selects potential destination frames, then verifies that the destination point remains visible throughout the trajectory by projecting it into each frame and checking for occlusion using depth maps. The longest continuous segment where the destination stays in view becomes the extracted trajectory.</p>
+
+    <p>I implemented floor-point detection via ray-casting. For each trajectory, the algorithm shoots a ray downward from the endpoint camera position and identifies the floor plane by detecting point cloud density within a cylindrical region, extracting walkable destination coordinates for navigation targets.</p>
+
+    <p>The resulting dataset provides real-world navigation trajectories with ground-truth depth and camera poses, which will help ground robotic navigation with reality.</p>
+  </div>
+
+  <p class="tags">python · slurm · vggt · pyscenedetect</p>
+
+  <h3 class="sec">demo</h3>
+  <div class="vidwrap">
+    <video src="/Pages/Research/Ai2/Bristle/demo.mp4" autoplay muted loop playsinline controls></video>
+  </div>
+  <p class="cap">extracted trajectory + depth, from a real house tour</p>
+
+</main>
+
+<footer>© 2026 andy ye · seattle, wa</footer>
+
+</body>
+</html>
