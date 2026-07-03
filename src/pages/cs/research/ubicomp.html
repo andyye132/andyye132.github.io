@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portfolio — Andy Ye</title>
+<title>Ubiquitous Computing — Andy Ye</title>
 <link rel="icon" type="image/png" href="/favicon.png">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -22,10 +22,14 @@
   nav.bar .here { font-weight: 700; }
 
   main { max-width: 720px; margin: 0 auto; padding: 2.5rem 1.4rem 4rem; }
+  .crumb { font-size: .9rem; margin-bottom: 1rem; }
+  h2.title { font-size: 1.4rem; margin-bottom: 1rem; }
   .dir { list-style: none; }
   .dir li { padding: .9rem 0; border-bottom: 1px solid #eeeae2; }
-  .dir a.title { font-size: 1.2rem; font-weight: 700; text-decoration: none; }
+  .dir a.title, .dir span.title { font-size: 1.2rem; font-weight: 700; text-decoration: none; }
   .dir a.title:hover { text-decoration: underline; }
+  .dir span.title { color: #1d1d1b; }
+  .dir .date { font-family: 'Courier New', Courier, monospace; color: #a19b90; font-size: .84rem; margin-left: .7rem; }
   .dir .about { color: #6b665d; font-size: .95rem; }
 
   footer { text-align: center; padding: 0 1rem 3rem; font-family: 'Courier New', Courier, monospace;
@@ -44,25 +48,23 @@
   <ul>
     <li><a href="/">home</a></li>
     <li><a href="/blog-archive">blog</a></li>
-    <li><a href="/cs">projects/research</a></li>
-    <li><a class="here" href="/creative">creative</a></li>
+    <li><a class="here" href="/cs">projects/research</a></li>
+    <li><a href="/creative">creative</a></li>
     <li><a href="/cv">cv</a></li>
   </ul>
 </nav>
 
 <main>
+  <p class="crumb"><a href="/cs/research">&larr; research</a></p>
+  <h2 class="title">ubiquitous computing</h2>
   <ul class="dir">
     <li>
-      <a class="title" href="/creative/art">oil painting</a>
-      <div class="about">landscapes, boats, and some abstract pieces. I haven't painted more since high school.</div>
+      <a class="title" href="/cs/research/ubicomp/beacon">Beacon AI</a>
+      <div class="about">Bernoulli level set estimation for efficient CFF threshold detection — at the UbiComp Lab (UW CSE), with Richard Li.</div>
     </li>
     <li>
-      <a class="title" href="/creative/music">music</a>
-      <div class="about">some compositions.</div>
-    </li>
-    <li>
-      <a class="title" href="/creative/games">card games</a>
-      <div class="about">printed and playtested tabletop games, with rules and PDFs.</div>
+      <span class="title"><em>ElectroNome</em>: Limb-Agnostic Synchronous Gestures via Electric-Field Sensing</span>
+      <div class="about">in review.</div>
     </li>
   </ul>
 </main>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DAWG'D — Andy Ye</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #fbfaf6; color: #1d1d1b; font-family: Georgia, 'Times New Roman', serif; font-size: 16.5px; line-height: 1.75; }
+  ::selection { background: #1c3aa9; color: #fff; }
+  a { color: #1c3aa9; }
+
+  .masthead { text-align: center; padding: 2.6rem 1rem 1.3rem; }
+  .masthead h1 { font-size: 2.5rem; font-weight: 700; color: #a09b92; letter-spacing: .02em; }
+  .masthead h1 a { color: inherit; text-decoration: none; }
+
+  nav.bar { border-top: 3px solid #ccc8c0; border-bottom: 3px solid #ccc8c0; background: #fffefb; }
+  nav.bar ul { list-style: none; display: flex; justify-content: space-around; flex-wrap: wrap; max-width: 780px; margin: 0 auto; }
+  nav.bar a { display: block; padding: .5rem 1.6rem; color: #1c3aa9; font-size: 1.05rem; text-decoration: none; }
+  nav.bar a:hover { text-decoration: underline; }
+  nav.bar .here { font-weight: 700; }
+
+  main { max-width: 760px; margin: 0 auto; padding: 2.5rem 1.4rem 4rem; }
+  .crumb { font-size: .9rem; margin-bottom: 1rem; }
+  h2.title { font-size: 1.6rem; margin-bottom: .2rem; }
+  .sub { font-style: italic; color: #8d887e; margin-bottom: 1.4rem; }
+
+  h3.sec { font-size: 1.05rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #8d887e;
+    border-bottom: 1px solid #ddd8cf; padding-bottom: .35rem; margin: 2rem 0 .9rem; }
+  .abstract { text-align: justify; }
+  .links { font-size: 1rem; margin: 1.2rem 0; }
+  .links span { color: #ccc8c0; }
+  figure { margin: 1.2rem 0; }
+  figure img { display: block; width: 100%; background: #fff; border: 1px solid #ccc8c0; padding: 4px; }
+  figcaption { font-family: 'Courier New', Courier, monospace; color: #a19b90; font-size: .8rem;
+    font-style: italic; text-align: center; padding-top: .3rem; }
+
+  footer { text-align: center; padding: 0 1rem 3rem; font-family: 'Courier New', Courier, monospace;
+    color: #b5afa4; font-size: .8rem; }
+
+  @media (max-width: 640px) {
+    .masthead h1 { font-size: 1.9rem; }
+    nav.bar a { padding: .45rem .9rem; font-size: .95rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead"><h1><a href="/">Andy Ye</a></h1></header>
+<nav class="bar">
+  <ul>
+    <li><a href="/">home</a></li>
+    <li><a href="/blog-archive">blog</a></li>
+    <li><a class="here" href="/cs">projects/research</a></li>
+    <li><a href="/creative">creative</a></li>
+    <li><a href="/cv">cv</a></li>
+  </ul>
+</nav>
+
+<main>
+  <p class="crumb"><a href="/cs/misc">&larr; misc</a></p>
+  <h2 class="title">DAWG'D</h2>
+  <p class="sub">adversarial attacks on screenshot web agents</p>
+
+  <h3 class="sec">abstract</h3>
+  <p class="abstract">AI agents increasingly browse the web for us, and a growing class of them act purely from screenshots of a page—where everything they perceive are pixels that a malicious website can alter. We demonstrate how dangerous this is. By altering a small patch of the page (about 10% of its area) so subtly that a person would not notice, we steer the open screenshot agent MolmoWeb-4B at three escalating levels, and at varying success rates. We first force the web agent to answer a question incorrectly (success&sim;60%); then make it return a believable lie—a mostly-true answer but a slightly altered fact, e.g. &ldquo;4 people killed&rdquo; becomes &ldquo;14&rdquo; (69%); and finally make it take the wrong action on the page. We present three major findings. First, what matters is the amount of the page we alter, not how it is arranged—one big patch and several small patches work equally well. Second, the obvious way to catch the believable-lie attack—checking whether the agent&rsquo;s answer still &ldquo;means the same thing&rdquo;—misses 76% of the lies, because changing one fact barely shifts the sentence; a simple fact-by-fact check catches them instead. Third, we can reliably disrupt an agent&rsquo;s action (90% of the time), but a small patch cannot force a specific attacker-chosen action. We also turn the attack into a defense: a small image classifier trained on our examples flags tampered screenshots nearly perfectly (0.9999 AUROC) on websites it has never seen, and the same signature transfers across all three attack types. We release our code and a labelled dataset of roughly 10,000 attacked screenshots.</p>
+
+  <p class="links">
+    data: <a href="https://huggingface.co/datasets/andyye132/dawg" target="_blank">huggingface.co/datasets/andyye132/dawg</a><br>
+    code: <a href="https://github.com/andyye132/DAWG" target="_blank">github.com/andyye132/DAWG</a>
+  </p>
+
+  <h3 class="sec">presentation</h3>
+  <figure>
+    <img src="/Pages/Projects/dawgd/poster.jpg" alt="DAWG'D — CSE 493G final presentation poster" loading="lazy">
+  </figure>
+
+  <p class="links">[<a href="/Pages/Projects/dawgd/DAWG_D_FINAL.pdf" download="DAWGD.pdf">download the paper (pdf)</a>]</p>
+</main>
+
+<footer>© 2026 andy ye · seattle, wa</footer>
+
+</body>
+</html>

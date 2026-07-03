@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portfolio — Andy Ye</title>
+<title>Game Development — Andy Ye</title>
 <link rel="icon" type="image/png" href="/favicon.png">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -22,10 +22,14 @@
   nav.bar .here { font-weight: 700; }
 
   main { max-width: 720px; margin: 0 auto; padding: 2.5rem 1.4rem 4rem; }
+  .crumb { font-size: .9rem; margin-bottom: 1rem; }
+  h2.title { font-size: 1.4rem; margin-bottom: 1rem; }
   .dir { list-style: none; }
   .dir li { padding: .9rem 0; border-bottom: 1px solid #eeeae2; }
-  .dir a.title { font-size: 1.2rem; font-weight: 700; text-decoration: none; }
+  .dir a.title, .dir span.title { font-size: 1.2rem; font-weight: 700; text-decoration: none; }
   .dir a.title:hover { text-decoration: underline; }
+  .dir span.title { color: #1d1d1b; }
+  .dir .date { font-family: 'Courier New', Courier, monospace; color: #a19b90; font-size: .84rem; margin-left: .7rem; }
   .dir .about { color: #6b665d; font-size: .95rem; }
 
   footer { text-align: center; padding: 0 1rem 3rem; font-family: 'Courier New', Courier, monospace;
@@ -44,25 +48,30 @@
   <ul>
     <li><a href="/">home</a></li>
     <li><a href="/blog-archive">blog</a></li>
-    <li><a href="/cs">projects/research</a></li>
-    <li><a class="here" href="/creative">creative</a></li>
+    <li><a class="here" href="/cs">projects/research</a></li>
+    <li><a href="/creative">creative</a></li>
     <li><a href="/cv">cv</a></li>
   </ul>
 </nav>
 
 <main>
+  <p class="crumb"><a href="/cs">&larr; projects/research</a></p>
+  <h2 class="title">game development</h2>
   <ul class="dir">
     <li>
-      <a class="title" href="/creative/art">oil painting</a>
-      <div class="about">landscapes, boats, and some abstract pieces. I haven't painted more since high school.</div>
+      <a class="title" href="/cs/gamedev/encore">CURRENT: Encore</a>
+      <div class="about">a 2d looter-shooter where two runners race, loot, and then duel for the crowd. braindump inside.</div>
     </li>
     <li>
-      <a class="title" href="/creative/music">music</a>
-      <div class="about">some compositions.</div>
+      <a class="title" href="/cs/gamedev/exposure-therapy">CURRENT: EXPOSURE THERAPY</a>
+      <div class="about">a horror game which gets scarier and more difficult depending on your heart rate.</div>
     </li>
     <li>
-      <a class="title" href="/creative/games">card games</a>
-      <div class="about">printed and playtested tabletop games, with rules and PDFs.</div>
+      <a class="title" href="https://github.com/andyye132/minos" target="_blank">minos</a><span class="date">dec 30, 2025</span>
+      <div class="about">github.com/andyye132/minos</div>
+    </li>
+    <li>
+      <span class="title">Helios</span><span class="date">timestamped 2023</span>
     </li>
   </ul>
 </main>

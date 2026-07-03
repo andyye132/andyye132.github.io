@@ -1,0 +1,759 @@
+---
+// Whole-island voxel map. Overview → hover a zone (glowing border + label) →
+// click to fly in → hover/click a building → zoom + content panel. Esc / back steps out.
+---
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>voxel map</title>
+<style is:global>
+  html,body{margin:0;height:100%;background:#0e1014;overflow:hidden;font:12px 'JetBrains Mono',monospace}
+  #hud{position:fixed;top:8px;left:8px;color:#9fb;white-space:pre;z-index:9;text-shadow:0 1px 2px #000}
+  #hint{position:fixed;top:8px;right:10px;color:#789;z-index:9}
+  /* film-grain overlay (unseen / crt3d style) */
+  #grain{position:fixed;top:-50%;left:-50%;width:200%;height:200%;z-index:7;pointer-events:none;opacity:0.10;
+    mix-blend-mode:overlay;background-repeat:repeat;will-change:transform;animation:grain .7s steps(3) infinite}
+  @keyframes grain{0%{transform:translate(0,0)}33%{transform:translate(-4%,3%)}66%{transform:translate(3%,-3%)}100%{transform:translate(-2%,4%)}}
+  /* floating zone labels (crisp DOM text projected to screen) — large, glowing section headers */
+  .zone-label{position:fixed;transform:translate(-50%,-50%);font-weight:800;font-size:46px;letter-spacing:.06em;
+    pointer-events:none;z-index:8;white-space:nowrap;opacity:0;transition:opacity .2s,transform .2s;
+    text-shadow:0 2px 12px rgba(0,0,0,.72),0 0 5px rgba(0,0,0,.5);}
+  /* building labels — styled like the section headers: colored by zone accent + a soft glow */
+  .bldg-label{position:fixed;transform:translate(-50%,-50%);font-weight:700;font-size:30px;letter-spacing:.03em;
+    color:#fff;pointer-events:none;z-index:8;white-space:nowrap;opacity:0;transition:opacity .15s,transform .15s;
+    text-shadow:0 2px 8px rgba(0,0,0,.8),0 0 4px rgba(0,0,0,.6);}
+  /* back button (drill-down only — bottom center) */
+  #back{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:12;background:rgba(10,14,20,.6);
+    border:1px solid #2a3038;color:#cde;padding:6px 14px;border-radius:7px;cursor:pointer;font:13px 'JetBrains Mono',monospace;
+    opacity:0;pointer-events:none;transition:opacity .2s;}
+  #back.show{opacity:1;pointer-events:auto;}
+  /* raft "back" label — small CRT-terminal green, floats over the log raft */
+  .raft-label{position:fixed;transform:translate(-50%,-50%);font-weight:700;font-size:19px;letter-spacing:.14em;
+    color:#82ffba;pointer-events:none;z-index:8;white-space:nowrap;opacity:0;transition:opacity .2s,transform .2s;
+    text-shadow:0 2px 8px rgba(0,0,0,.8), 0 0 10px rgba(91,255,158,.9), 0 0 24px rgba(91,255,158,.5);}
+  /* fade back to the monitor (matches crt3d's room black) */
+  #fade{position:fixed;inset:0;z-index:40;background:#0a0810;opacity:0;pointer-events:none;transition:opacity .5s ease;}
+  #fade.on{opacity:1;pointer-events:auto;}
+  /* ── content = a FILE FOLDER that opens: the front cover SLIDES DOWN to reveal the page inside.
+        Folder color is per-zone (--folder, set in JS). Pure CSS (no WebGL). Near-full-screen. ── */
+  #panel{position:fixed;inset:0;margin:auto;width:min(72vw,1200px);height:82vh;z-index:20;
+    visibility:hidden;pointer-events:none;--folder:#e7d6a6;transform:translateY(0);transition:transform .6s cubic-bezier(.45,.05,.3,1);}
+  #panel.active{visibility:visible;}
+  #panel.open{pointer-events:auto;}
+  #panel.exit{transform:translateY(122vh);}                 /* close = the whole folder slides down off-screen */
+  /* the open folder (back) holding the document (the page) */
+  #panel .doc{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;border-radius:5px 5px 12px 12px;
+    background:var(--folder);box-shadow:0 46px 130px rgba(0,0,0,.62),inset 0 0 0 2px color-mix(in srgb,var(--folder) 66%,#4a3a12);}
+  #panel .phead{display:flex;align-items:center;justify-content:space-between;padding:12px 22px;
+    background:color-mix(in srgb,var(--folder) 84%,#6a531f);border-bottom:1px solid color-mix(in srgb,var(--folder) 55%,#4a3a12);}
+  #panel .ptitle{color:#3a2c10;font-weight:700;font-size:19px;letter-spacing:.03em;}
+  #panel .pclose{cursor:pointer;background:color-mix(in srgb,var(--folder) 80%,#fff);border:1px solid color-mix(in srgb,var(--folder) 55%,#4a3a12);
+    color:#3a2c10;border-radius:6px;padding:6px 13px;font:13px 'JetBrains Mono',monospace;}
+  #panel .pclose:hover{background:#fff;}
+  #panel .pbody{flex:1;overflow:auto;position:relative;margin:10px;border-radius:6px;background:#0b0e15;box-shadow:0 3px 16px rgba(0,0,0,.4);}
+  #panel .pbody.pad{padding:26px;line-height:1.66;color:#e6ecf4;}
+  #panel .pbody .tags{color:var(--accent,#a8c7fa);margin-top:12px;font-size:13px;}
+  #panel .pbody iframe{display:block;width:100%;height:100%;border:0;border-radius:6px;background:#fff;opacity:0;transition:opacity .4s ease;}
+  #panel .pbody.loaded iframe{opacity:1;}
+  /* front cover — folder-colored sheet + tab; slides down smoothly to reveal the page (top→bottom) */
+  #panel .cover{position:absolute;inset:0;z-index:3;border-radius:5px 5px 12px 12px;
+    background:linear-gradient(158deg,color-mix(in srgb,var(--folder) 78%,#fff) 0%,var(--folder) 55%,color-mix(in srgb,var(--folder) 82%,#000) 100%);
+    box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--folder) 66%,#4a3a12),inset 0 3px 0 color-mix(in srgb,var(--folder) 55%,#fff),0 46px 130px rgba(0,0,0,.62);
+    transform:translateY(0);transition:transform .9s cubic-bezier(.4,.04,.2,1);}
+  #panel.open .cover{transform:translateY(103%);pointer-events:none;}
+  #panel .cover::before{content:'';position:absolute;top:-34px;left:8%;width:26%;height:36px;border-radius:10px 10px 0 0;
+    background:linear-gradient(158deg,color-mix(in srgb,var(--folder) 78%,#fff),var(--folder));
+    box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--folder) 66%,#4a3a12),inset 0 3px 0 color-mix(in srgb,var(--folder) 55%,#fff);}
+  #panel .cover::after{content:'';position:absolute;left:7%;right:7%;bottom:15%;height:2px;background:#4a3a1226;}
+  @media (prefers-reduced-motion:reduce){#panel .cover,#panel .doc{transition:none;}}
+</style>
+</head>
+<body>
+<div id="hud">building map…</div>
+<div id="hint">hover a zone · click to enter · click a building</div>
+<div id="grain"></div>
+<button id="back">‹ back</button>
+<div id="fade"></div>
+<div id="panel">
+  <div class="doc"><div class="phead"><span class="ptitle"></span><button class="pclose">× close</button></div><div class="pbody"></div></div>
+  <div class="cover"></div>
+</div>
+<script>
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
+import { makeVoxels } from '../voxrender.js';
+import { buildMap, GRID, TILE, LAYOUT, ZONES, RAFT, zoneAt, depthAt } from '../voxmap.js';
+import { buildVox } from '../voxbuildings.js';
+
+// short display names + per-building top height (for floating labels)
+const BNAMES = { art:'art', blog1:'blog', cards:'games', blog4:'archive', project1:'misc', project2:'game development',
+  research1:'robotics', research2:'ubiquitous computing', resumeBuilding:'resume', transcript:'transcript', infobuilding:'about' };
+const HEIGHTS = {}, BDIMS = {};   // per-building top height (labels) + footprint bbox (hover borders)
+for (const [key] of LAYOUT){ let h=0, mnx=1e9,mxx=-1e9,mnz=1e9,mxz=-1e9;
+  for (const v of buildVox(key)){ if (v.y>h) h=v.y;
+    if (v.y>=0){ if(v.x<mnx)mnx=v.x; if(v.x>mxx)mxx=v.x; if(v.z<mnz)mnz=v.z; if(v.z>mxz)mxz=v.z; } }
+  HEIGHTS[key]=h; BDIMS[key]={ w:mxx-mnx+1, d:mxz-mnz+1 }; }
+
+const vox = buildMap();
+
+const renderer = new THREE.WebGLRenderer({ antialias:false, powerPreference:'high-performance' });   // backbuffer only receives fullscreen quads — geometry AA comes from islandRT's MSAA
+renderer.setPixelRatio(1); renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = 1.02;   // lower; the grade warms it
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene(); scene.background = new THREE.Color('#0b0a12');
+scene.fog = new THREE.Fog(0x14121c, 360, 580);   // dark moody haze fogs the far sea; camera sits ~280 back
+
+// warm IBL env (golden-hour) — drives the island + water shading toward the crt3d look
+function envTex(){ const c=document.createElement('canvas'); c.width=16; c.height=256; const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,0,256); g.addColorStop(0,'#cdd2e0'); g.addColorStop(.5,'#e8cdb2'); g.addColorStop(.64,'#caa78c'); g.addColorStop(1,'#2a2024');
+  x.fillStyle=g; x.fillRect(0,0,16,256);
+  const lobe=x.createRadialGradient(8,96,0,8,96,9); lobe.addColorStop(0,'rgba(255,224,176,0.9)'); lobe.addColorStop(1,'rgba(0,0,0,0)');
+  x.globalCompositeOperation='lighter'; x.fillStyle=lobe; x.fillRect(0,60,16,72); x.globalCompositeOperation='source-over';
+  const t=new THREE.CanvasTexture(c); t.mapping=THREE.EquirectangularReflectionMapping; return t; }
+const pmrem = new THREE.PMREMGenerator(renderer); scene.environment = pmrem.fromEquirectangular(envTex()).texture; scene.environmentIntensity = 0.92;
+
+const sun = new THREE.DirectionalLight(0xffe6c0, 2.6); sun.position.set(70, 120, 48); sun.castShadow = true;
+sun.shadow.mapSize.set(2048,2048); sun.shadow.radius = 4; sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.6;
+const sc = sun.shadow.camera; sc.left=-78; sc.right=78; sc.top=78; sc.bottom=-78; sc.near=1; sc.far=320; scene.add(sun);
+const hemi = new THREE.HemisphereLight(0xffe9d0, 0x4a3a30, 0.55); scene.add(hemi);
+const amb = new THREE.AmbientLight(0xc9d6e4, 0.13); scene.add(amb);   // soft floor so shaded building sides never crush to black
+
+// gradient backdrop sphere (warm dusk sky + glow toward the sun) — replaces the flat blue bg
+const SUN_DIR = sun.position.clone().normalize();
+const backdrop = new THREE.Mesh(new THREE.SphereGeometry(600, 32, 16), new THREE.ShaderMaterial({
+  side: THREE.BackSide, depthWrite: false, fog: false,
+  uniforms: { uTop:{value:new THREE.Vector3(0.09,0.10,0.16)}, uMid:{value:new THREE.Vector3(0.055,0.055,0.095)},
+    uBot:{value:new THREE.Vector3(0.02,0.022,0.038)}, uGlowCol:{value:new THREE.Vector3(0.55,0.42,0.5)},
+    uGlowDir:{value:SUN_DIR.clone()}, uGlowInt:{value:0.35} },   // dark moody sky → water reflects DARK = glossy black liquid
+  vertexShader:`varying vec3 vW; void main(){ vec4 wp=modelMatrix*vec4(position,1.0); vW=wp.xyz; gl_Position=projectionMatrix*viewMatrix*wp; }`,
+  fragmentShader:`varying vec3 vW; uniform vec3 uTop,uMid,uBot,uGlowCol,uGlowDir; uniform float uGlowInt;
+    void main(){ vec3 dir=normalize(vW-cameraPosition); float h=clamp(dir.y*0.5+0.5,0.0,1.0);
+      vec3 col=mix(uBot,uMid,smoothstep(0.32,0.56,h)); col=mix(col,uTop,smoothstep(0.56,0.95,h));
+      float gd=max(dot(dir,normalize(uGlowDir)),0.0); col+=uGlowCol*pow(smoothstep(0.5,1.0,gd),1.4)*uGlowInt;
+      gl_FragColor=vec4(col,1.0); }`}));
+backdrop.renderOrder = -10; scene.add(backdrop);
+
+// the sun is INVISIBLE (no disc) — SUN_POS is just the screen-space marker that positions the god-ray shafts
+const SUN_POS = SUN_DIR.clone().multiplyScalar(180);
+
+const SPAN = GRID * TILE, HALF = SPAN/2;
+const { root, bounds, counts, warmMat } = makeVoxels(vox);
+root.position.set(-HALF, 0, -HALF);
+const grp = new THREE.Group(); grp.add(root); scene.add(grp);
+
+// ── water: SCREEN-SPACE planar reflection. THREE.Water's mirror math is perspective-only and
+//    BREAKS under our orthographic camera. Instead we render the island + sky to textures and
+//    reflect them about the waterline in a fullscreen pass — EXACT for a fixed ortho camera
+//    (a point at +H projects to v_surf−k·H, its mirror at −H to 2·v_surf−v). This is index.html's
+//    technique, ported to consume our 3D render. Set up after the camera exists (below). ──
+const WATER_Y = -1.7;
+
+// ── zone geometry: rect (bbox of member footprints + pad) + centroid + camera span ──
+const wx = gx => gx*TILE - HALF, wz = gy => gy*TILE - HALF;
+const ZINFO = {};
+for (const z in ZONES){
+  const ms = ZONES[z].members.map(k => LAYOUT.find(l => l[0]===k)).filter(Boolean);
+  let x1=1e9,x2=-1e9,y1=1e9,y2=-1e9,cx=0,cy=0;
+  for (const [,gx,gy] of ms){ x1=Math.min(x1,gx); y1=Math.min(y1,gy); x2=Math.max(x2,gx+2); y2=Math.max(y2,gy+2); cx+=gx+1; cy+=gy+1; }
+  cx/=ms.length; cy/=ms.length; const pad=1.3;
+  const rx1=wx(x1-pad), rx2=wx(x2+pad), rz1=wz(y1-pad), rz2=wz(y2+pad);
+  ZINFO[z] = { rx1, rx2, rz1, rz2, cx:wx(cx), cz:wz(cy), color:ZONES[z].color, label:ZONES[z].label,
+    span: Math.max(rx2-rx1, rz2-rz1) * 0.62 };
+}
+
+// ── glowing raised border (4 thin unlit walls), reused per hovered zone ──
+const borderMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.55, depthWrite:true });   // writes depth so the water compositor keeps it ABOVE water (+ it reflects)
+const borderGrp = new THREE.Group(); borderGrp.visible = false; scene.add(borderGrp);
+const walls = []; for (let i=0;i<4;i++){ const w=new THREE.Mesh(new THREE.BoxGeometry(1,1,1), borderMat); borderGrp.add(w); walls.push(w); }
+function setBorder(z){ if (!z){ borderGrp.visible=false; return; }
+  const r=ZINFO[z]; borderGrp.visible=true; borderMat.color.set(r.color);
+  const h=3.6, y=h/2, th=0.9, W=r.rx2-r.rx1, D=r.rz2-r.rz1, mx=(r.rx1+r.rx2)/2, mz=(r.rz1+r.rz2)/2;
+  walls[0].scale.set(W,h,th); walls[0].position.set(mx,y,r.rz1);
+  walls[1].scale.set(W,h,th); walls[1].position.set(mx,y,r.rz2);
+  walls[2].scale.set(th,h,D); walls[2].position.set(r.rx1,y,mz);
+  walls[3].scale.set(th,h,D); walls[3].position.set(r.rx2,y,mz); }
+
+// ── building hover highlight: a glowing raised BORDER sized to each building's footprint
+//    (the old fixed-size ring vanished under big buildings) ──
+const ringMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.7, depthWrite:true });   // above water + reflected
+const bldgBorderGrp = new THREE.Group(); bldgBorderGrp.visible = false; scene.add(bldgBorderGrp);
+const bwalls = []; for (let i=0;i<4;i++){ const w=new THREE.Mesh(new THREE.BoxGeometry(1,1,1), ringMat); bldgBorderGrp.add(w); bwalls.push(w); }
+function setRing(key){ if (!key){ bldgBorderGrp.visible=false; return; } const e=LAYOUT.find(l=>l[0]===key); if(!e)return;
+  const dim = BDIMS[key]||{w:12,d:12}, pad=1.8, h=2.6, th=0.8;
+  const W=dim.w+pad*2, D=dim.d+pad*2, mx=wx(e[1]+1), mz=wz(e[2]+1), y=h/2;
+  bwalls[0].scale.set(W,h,th); bwalls[0].position.set(mx,y,mz-D/2);
+  bwalls[1].scale.set(W,h,th); bwalls[1].position.set(mx,y,mz+D/2);
+  bwalls[2].scale.set(th,h,D); bwalls[2].position.set(mx-W/2,y,mz);
+  bwalls[3].scale.set(th,h,D); bwalls[3].position.set(mx+W/2,y,mz);
+  bldgBorderGrp.visible=true;
+  // SHINE: push the accent past 1.0 so bloom halos it — pale accents (creative gold) were invisible on sand
+  ringMat.color.set(ZONES[activeZone]?.color||'#fff').lerp(new THREE.Color('#ffffff'), 0.25).multiplyScalar(1.6); }
+
+// ── camera (fixed dimetric, eased tween, render-on-demand) ──
+const DIR = new THREE.Vector3(1, 0.85, 1).normalize();
+// camera screen axes (fixed) → so the sun can be placed by SCREEN intent (top) and shadows fall away from it
+const _camF = DIR.clone().negate();
+const camR = new THREE.Vector3().crossVectors(_camF, new THREE.Vector3(0,1,0)).normalize();   // screen-right
+const camU = new THREE.Vector3().crossVectors(camR, _camF).normalize();                        // screen-up
+const skyBack  = new THREE.Vector3(camU.x, 0, camU.z).normalize();   // ground dir that projects "up-screen" (light from here → shadows fall down-screen, toward viewer)
+const skyRight = new THREE.Vector3(camR.x, 0, camR.z).normalize();   // ground dir that projects "right-screen" (the dawn→dusk arc)
+const OVERVIEW = { t: new THREE.Vector3(0, 2, 0), span: HALF * 1.16 };
+const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, -400, 900);
+const cur = { t: OVERVIEW.t.clone(), span: OVERVIEW.span };
+let anim = null, need = true, firstRendered = false, _rtDirty = true, _uiDirty = true;
+const ease = k => k < 0.5 ? 4*k*k*k : 1 - Math.pow(-2*k+2, 3)/2;
+function tweenTo(t, span){ anim = { fromT: cur.t.clone(), toT: t.clone(), fromSpan: cur.span, toSpan: span, t0: performance.now(), dur: 560 }; need = true; }
+function applyCam(){ const a = innerWidth/innerHeight;
+  cam.position.copy(DIR).multiplyScalar(280).add(cur.t); cam.lookAt(cur.t);
+  cam.left=-cur.span*a; cam.right=cur.span*a; cam.top=cur.span; cam.bottom=-cur.span; cam.updateProjectionMatrix(); }
+applyCam();
+
+/* ===== post-processing: god rays → bloom → dusty-rose grade (ported from crt3d) ===== */
+// INVISIBLE-SOURCE god rays: radial-scatter an analytic sky-source, with the island alpha as a HARD
+// black occluder → shafts break around the island and fall on the water. coreMask kills the disc.
+// PERF: the 28-sample march runs in a HALF-RES prepass (shafts are soft/low-frequency, so a bilinear
+// upsample is visually identical at ~1/4 the marching cost); the composer pass is then a single tap.
+const rayGenMat = new THREE.ShaderMaterial({
+  uniforms:{ tIsland:{value:null}, lightPos:{value:new THREE.Vector2(0.5,0.8)},
+    density:{value:1.05}, weight:{value:0.5}, decay:{value:0.98}, exposure:{value:0.11},   // rays reach further down the frame; subtle but visible shafts
+    uSunSize:{value:0.42}, uAspect:{value:1.0}, uTime:{value:0.0} },
+  vertexShader:`varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+  fragmentShader:`#define SAMPLES 28
+    uniform sampler2D tIsland; uniform vec2 lightPos;
+    uniform float density,weight,decay,exposure,uSunSize,uAspect,uTime; varying vec2 vUv;
+    float ign(vec2 p){ return fract(52.9829189*fract(dot(p,vec2(0.06711056,0.00583715)))); }
+    void main(){
+      vec2 delta=(vUv-lightPos)*(density/float(SAMPLES));       // UV space (NOT aspect-corrected → straight shafts)
+      vec2 coord=vUv - delta*ign(gl_FragCoord.xy);              // dithered start → stable, no banding as the sun moves
+      float illum=1.0, ray=0.0;
+      for(int i=0;i<SAMPLES;i++){ coord-=delta;
+        vec2 dd=coord-lightPos; dd.x*=uAspect;
+        float src=smoothstep(uSunSize,0.0,length(dd));          // bright sky toward the (invisible) sun
+        float occ=1.0-step(0.5,texture2D(tIsland,coord).a);     // island silhouette = hard occluder → gaps
+        ray+=src*occ*illum*weight; illum*=decay; }
+      ray*=exposure;
+      // radial STREAKS → distinct golden-hour light shafts fanning from the sun (slowly drifting)
+      vec2 sd=vUv-lightPos; sd.x*=uAspect; float ang=atan(sd.y, sd.x);
+      float streak=0.25 + 0.75*(0.5+0.5*sin(ang*13.0+uTime*0.12))*(0.55+0.45*sin(ang*6.0-uTime*0.08));
+      ray*=streak;
+      float edge=smoothstep(1.7,0.15,length(vUv-0.5));         // soft frame falloff (no dark core mask → the source glow shows)
+      gl_FragColor=vec4(ray*edge,0.0,0.0,1.0); }`
+});
+const rayQuad = new FullScreenQuad(rayGenMat);
+let rayRT;
+function makeRayRT(w,h){ rayRT?.dispose();
+  rayRT = new THREE.WebGLRenderTarget(Math.max(1,Math.floor(w*0.5)), Math.max(1,Math.floor(h*0.5)),
+    { type:THREE.HalfFloatType, minFilter:THREE.LinearFilter, magFilter:THREE.LinearFilter, depthBuffer:false }); }
+makeRayRT(innerWidth, innerHeight);
+const GodRays = {
+  uniforms:{ tDiffuse:{value:null}, tRay:{value:null}, uColor:{value:new THREE.Vector3(1.0,0.94,0.86)}, uLightOn:{value:1.0} },
+  vertexShader:`varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+  fragmentShader:`uniform sampler2D tDiffuse, tRay; uniform vec3 uColor; uniform float uLightOn; varying vec2 vUv;
+    void main(){ vec3 base=texture2D(tDiffuse,vUv).rgb;
+      gl_FragColor=vec4(base + uColor*texture2D(tRay,vUv).r*uLightOn, 1.0); }`
+};
+const godrays = new ShaderPass(GodRays);
+const Grade = {
+  uniforms:{ tDiffuse:{value:null}, time:{value:0}, uExposure:{value:1.0}, uContrast:{value:1.08},
+    uTintShadow:{value:0.12}, uTintMid:{value:0.14}, uTintHigh:{value:0.15}, uDesatHi:{value:0.08},
+    uLift:{value:0.015}, uVignette:{value:0.34}, uGrain:{value:0.018} },
+  vertexShader:`varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+  fragmentShader:`uniform sampler2D tDiffuse; uniform float time,uExposure,uContrast,uTintShadow,uTintMid,uTintHigh,uDesatHi,uLift,uVignette,uGrain; varying vec2 vUv;
+    const vec3 PAL_SHADOW=vec3(0.044,0.056,0.090); const vec3 PAL_MID=vec3(0.780,0.790,0.895); const vec3 PAL_HIGH=vec3(0.892,0.922,0.968);
+    float luma(vec3 c){ return dot(c,vec3(0.2126,0.7152,0.0722)); }
+    vec3 tintToward(vec3 c,vec3 pal,float amt){ float L=max(luma(c),1e-4); vec3 chroma=pal/max(luma(pal),1e-4); return mix(c,chroma*L,amt); }
+    void main(){ vec3 c=texture2D(tDiffuse,vUv).rgb*uExposure; float L=luma(c); float Ln=L/(1.0+L);
+      float wS=1.0-smoothstep(0.02,0.40,Ln); float wH=smoothstep(0.55,1.0,Ln); float wM=clamp(1.0-wS-wH,0.0,1.0);
+      c=tintToward(c,PAL_SHADOW,uTintShadow*wS); c=tintToward(c,PAL_MID,uTintMid*wM); c=tintToward(c,PAL_HIGH,uTintHigh*wH);
+      float ext=max(wS,wH); float gE=luma(c); c=mix(c,vec3(gE),uDesatHi*ext);
+      vec3 pivot=vec3(0.18); c=pivot*pow(max(c/pivot,0.0),vec3(uContrast)); c+=PAL_SHADOW*uLift;
+      float d=length((vUv-0.5)*vec2(1.04,1.0)); float vig=smoothstep(0.85,0.30,d); c=mix(mix(c,PAL_SHADOW*0.40,uVignette),c,vig);
+      float n=fract(sin(dot(vUv*(time+1.0),vec2(12.9898,78.233)))*43758.5453); c+=(n-0.5)*uGrain;
+      gl_FragColor=vec4(max(c,0.0),1.0); }`
+};
+const vgPass = new ShaderPass(Grade);
+
+/* ===== screen-space reflection water (index.html technique, ortho-correct) ===== */
+const WFX = { deep: new THREE.Color(0x1e2a3a).convertSRGBToLinear(), sunCol: new THREE.Color(0xbcd0ee).convertSRGBToLinear() };
+let islandRT, skyRT;
+function makeRTs(w,h){ islandRT?.dispose(); skyRT?.dispose();
+  const base = { type: THREE.HalfFloatType, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter };
+  islandRT = new THREE.WebGLRenderTarget(w, h, { ...base, samples: 2 }); islandRT.texture.colorSpace = THREE.LinearSRGBColorSpace;
+  islandRT.depthTexture = new THREE.DepthTexture(w, h); islandRT.depthTexture.type = THREE.UnsignedIntType;   // ortho depth → linear; drives shallow/deep + foam
+  // sky = pure smooth gradient → HALF-RES + bilinear upsample is pixel-identical, quarter the fill
+  skyRT    = new THREE.WebGLRenderTarget(Math.max(1,w>>1), Math.max(1,h>>1), base); skyRT.texture.colorSpace = THREE.LinearSRGBColorSpace; }
+makeRTs(innerWidth, innerHeight);
+// render the island (+hover overlays) and the sky into separate textures each frame.
+// skipSky: hover-pulse-only refreshes touch just the island RT (the sky can't have changed).
+function renderRTs(skipSky){
+  const bg = scene.background;
+  backdrop.visible = false; scene.background = null;   // island only → transparent = alpha mask
+  grp.visible = true; borderGrp.visible = (hoveredZone != null); bldgBorderGrp.visible = (hoveredBldg != null);
+  renderer.setRenderTarget(islandRT); renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(scene, cam);
+  if (!skipSky){
+    backdrop.visible = true; grp.visible = false; borderGrp.visible = false; bldgBorderGrp.visible = false; // sky only
+    renderer.setRenderTarget(skyRT); renderer.setClearColor(0x000000, 1); renderer.clear(); renderer.render(scene, cam);
+    grp.visible = true; borderGrp.visible = (hoveredZone != null); bldgBorderGrp.visible = (hoveredBldg != null);
+  }
+  backdrop.visible = true; scene.background = bg; renderer.setRenderTarget(null);
+}
+const WaterFX = {
+  uniforms: {
+    tDiffuse:{value:null}, tIsland:{value:null}, tSky:{value:null}, tDepth:{value:null},
+    uInvViewProj:{value:new THREE.Matrix4()}, uView:{value:DIR.clone()}, uSunDir:{value:SUN_DIR.clone()},
+    uWaterY:{value:WATER_Y}, uSurfV:{value:0.5}, uTime:{value:0}, uPlaneR:{value:SPAN*1.9},
+    uDeep:{value:new THREE.Color(0x46586e).convertSRGBToLinear()}, uShallow:{value:new THREE.Color(0xc7b4cb).convertSRGBToLinear()},
+    uSunCol:{value:new THREE.Color(0xffe2d4).convertSRGBToLinear()}, uFoamCol:{value:new THREE.Color(0xf3ecf1).convertSRGBToLinear()},
+    uSpec:{value:0.6}, uShine:{value:70.0}, uReflAmt:{value:0.5}, uWaveAmt:{value:1.6}, uSunDiffuse:{value:0.16},
+    uDepthMax:{value:6.5}, uFoamW:{value:1.1},
+    tRipple:{value:null}, uSimH:{value:1.0}, uRippleAmp:{value:2.0}, uRippleOn:{value:0.0} },
+  vertexShader:`varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+  fragmentShader:`varying vec2 vUv;
+    uniform sampler2D tDiffuse, tIsland, tSky, tDepth; uniform mat4 uInvViewProj;
+    uniform vec3 uView, uSunDir, uDeep, uShallow, uSunCol, uFoamCol;
+    uniform float uWaterY, uSurfV, uTime, uPlaneR, uSpec, uShine, uReflAmt, uWaveAmt, uDepthMax, uFoamW, uSunDiffuse;
+    uniform sampler2D tRipple; uniform float uSimH, uRippleAmp, uRippleOn;
+    float hash21(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+    float vnoise(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
+      return mix(mix(hash21(i),hash21(i+vec2(1,0)),f.x), mix(hash21(i+vec2(0,1)),hash21(i+vec2(1,1)),f.x), f.y); }
+    float ambientH(vec2 p, float t){          // stochastic surface: 2 slow swells + scrolling fbm (natural, not orderly)
+      float h = sin(dot(p,vec2(0.085,0.05))+t*0.5)*0.5 + sin(dot(p,vec2(-0.05,0.10))+t*0.62)*0.34;
+      vec2 q=p*0.13 + vec2(t*0.07, t*0.05); float f=0.0,a=0.5;
+      for(int o=0;o<3;o++){ f+=vnoise(q)*a; q=q*2.03+1.7; a*=0.5; }
+      return h + (f-0.5)*1.5; }
+    void main(){
+      vec2 ndc=vUv*2.0-1.0;
+      vec4 wn=uInvViewProj*vec4(ndc,-1.0,1.0); wn/=wn.w;
+      vec4 wf=uInvViewProj*vec4(ndc, 1.0,1.0); wf/=wf.w;
+      vec3 rd=normalize(wf.xyz-wn.xyz);
+      float tHit=(uWaterY-wn.y)/rd.y; vec3 wp=wn.xyz+rd*tHit;
+      float edge=smoothstep(uPlaneR, uPlaneR*0.72, length(wp.xz));
+      float onWater=step(0.0,tHit)*edge;
+      // ── stochastic waves: height + normal from finite differences of a noisy field ──
+      float eps=0.7;
+      float hC=ambientH(wp.xz, uTime), hX=ambientH(wp.xz+vec2(eps,0.0), uTime), hZ=ambientH(wp.xz+vec2(0.0,eps), uTime);
+      float h=hC; vec2 gr=vec2(hX-hC, hZ-hC)/eps;
+      gr*=uWaveAmt;
+      // ── cursor ripples: sampled from the heightfield sim (UNLIMITED — the whole surface can ripple, no cap) ──
+      // uRippleOn gates the 5 taps away entirely while the sim sleeps (calm water = flat field anyway)
+      vec2 rUv = wp.xz/(2.0*uSimH) + 0.5;
+      if (uRippleOn>0.5 && rUv.x>0.0 && rUv.x<1.0 && rUv.y>0.0 && rUv.y<1.0){ float rt=1.0/512.0;
+        float rl=texture2D(tRipple,rUv-vec2(rt,0.0)).r, rr2=texture2D(tRipple,rUv+vec2(rt,0.0)).r;
+        float ru=texture2D(tRipple,rUv-vec2(0.0,rt)).r, rd=texture2D(tRipple,rUv+vec2(0.0,rt)).r;
+        gr += vec2(rr2-rl, rd-ru)*uRippleAmp; h += texture2D(tRipple,rUv).r*0.7; }
+      vec3 N=normalize(vec3(-gr.x,1.0,-gr.y));
+      vec3 V=uView; float NdotV=max(dot(N,V),0.0); float fres=0.02+0.98*pow(1.0-NdotV,5.0);
+      // ── depth: reconstruct the island/seabed world point at this pixel from the depth buffer ──
+      float zb=texture2D(tDepth, vUv).x;
+      vec4 sN=uInvViewProj*vec4(ndc, zb*2.0-1.0, 1.0); sN/=sN.w;
+      vec4 isl=texture2D(tIsland, vUv);
+      float hasIsl=step(0.5, isl.a);
+      float dry=hasIsl*step(uWaterY-0.05, sN.y);                 // island pixel ABOVE the waterline = dry land
+      float wDepth = mix(uDepthMax, max(uWaterY - sN.y, 0.0), hasIsl);   // sea = deep; seabed = shallow
+      float depthFade=clamp(wDepth/uDepthMax, 0.0, 1.0);
+      // ── body: shallow→deep pastel gradient (brightness NOT tied to wave height → no chop) ──
+      vec3 bodyDeep=mix(uShallow, uDeep, depthFade)*(0.94+0.08*h);
+      vec3 seabed=texture2D(tIsland, vUv + N.xz*0.02*(1.0-depthFade)).rgb;   // gentle refraction wobble
+      vec3 body=mix(seabed, bodyDeep, clamp(depthFade*1.35, 0.0, 1.0));      // see-through near shore
+      // ── soft sky reflection, mirrored about the waterline ──
+      vec2 skyRuv=vec2(vUv.x+N.x*0.04, 2.0*uSurfV-vUv.y-N.z*0.04);
+      vec3 skyRefl=texture2D(tSky, clamp(skyRuv,0.0,1.0)).rgb;
+      float reflMix=mix(0.34,1.0,fres)*uReflAmt;   // base reflection floor → the pastel sky shows even top-down (luminous, not flat)
+      vec3 water=mix(body, skyRefl, reflMix);
+      // ── island reflection: mirrored below the shore. reaches further + a fresnel FLOOR so the lit
+      //    windows/lamps streak down onto the water (warm reflections) even from the near-top-down view ──
+      float rdep=clamp(uSurfV-vUv.y,0.0,1.0); float reflFade=exp(-rdep*1.15);
+      vec2 ruv=vec2(vUv.x+N.x*0.04, 2.0*uSurfV-vUv.y-N.z*0.04);
+      if(ruv.y>=0.0 && ruv.y<=1.0 && reflFade>0.01){
+        float bl=(0.004+length(gr)*0.5*0.006); vec3 refl=vec3(0.0); float ws=0.0;
+        for(int k=-2;k<=2;k++){ float w=1.0-abs(float(k))*0.25; refl+=texture2D(tIsland, ruv+vec2(float(k)*bl,0.0)).rgb*w; ws+=w; }
+        refl/=ws; float reflA=texture2D(tIsland, ruv).a;
+        // brighten the reflected lights a touch so their glow carries onto the water
+        float rl=max(max(refl.r,refl.g),refl.b); refl*=1.0+smoothstep(0.5,1.2,rl)*0.6;
+        water=mix(water, refl, reflA*mix(0.42,1.0,fres)*0.95*reflFade); }
+      // ── shared sun/moon LIGHT: the lit side of the water brightens (same light as the island) ──
+      water += uSunCol * uSunDiffuse * (dot(N,normalize(uSunDir))*0.5 + 0.5);
+      // ── soft broad glint + faint crest sparkle ──
+      vec3 R=reflect(-V,N); water+=uSunCol*pow(max(dot(R,normalize(uSunDir)),0.0),uShine)*uSpec;
+      water+=uSunCol*0.15*smoothstep(0.55,0.9,h);
+      // ── shoreline foam ──
+      // ── white wave crests: where the stochastic surface peaks / steepens, broken up by noise ──
+      float crest = smoothstep(0.5,1.15,hC)*(0.55+0.45*vnoise(wp.xz*0.7+uTime*0.6)) + smoothstep(0.6,1.5,length(gr));
+      water += uFoamCol*clamp(crest,0.0,1.0)*0.5*onWater;
+      // ── shoreline foam ──
+      float foam=(1.0-smoothstep(0.0,uFoamW,wDepth)) * (0.55+0.45*sin(wp.x*0.5+wp.z*0.45+uTime*0.7));
+      water+=uFoamCol*smoothstep(0.32,0.85,foam)*0.9;
+      // ── compose: sky, then water over sea+seabed, then dry land on top ──
+      vec3 sky=texture2D(tSky, vUv).rgb;
+      float showWater=max(onWater, hasIsl*(1.0-dry));
+      vec3 col=mix(sky, water, showWater);
+      col=mix(col, isl.rgb, dry);
+      gl_FragColor=vec4(col,1.0); }`
+};
+const waterPass = new ShaderPass(WaterFX);
+const _ivp = new THREE.Matrix4(), _wl = new THREE.Vector3();
+function updateWaterUniforms(){ cam.updateMatrixWorld();
+  _ivp.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse).invert(); waterPass.uniforms.uInvViewProj.value.copy(_ivp);
+  waterPass.uniforms.uView.value.copy(DIR); waterPass.uniforms.uSunDir.value.copy(SUN_DIR);
+  _wl.set(0, WATER_Y, 0).project(cam); waterPass.uniforms.uSurfV.value = _wl.y*0.5 + 0.5;
+  waterPass.uniforms.tIsland.value = islandRT.texture; waterPass.uniforms.tSky.value = skyRT.texture;
+  waterPass.uniforms.tDepth.value = islandRT.depthTexture;
+  waterPass.uniforms.tRipple.value = simA.texture; waterPass.uniforms.uSimH.value = SIMH; }
+
+// ── ripple heightfield sim: the cursor stirs a wave FIELD (unlimited — the whole surface can ripple,
+//    no cap on movement — and it's cheaper than the old per-ripple loop: one texture sample). ──
+const SIMN = 512, SIMH = SPAN * 1.7;   // world half-extent the sim covers (centered on the origin)
+let simA, simB;
+function makeSim(){ simA?.dispose(); simB?.dispose();
+  const o = { type: THREE.HalfFloatType, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: false };
+  simA = new THREE.WebGLRenderTarget(SIMN, SIMN, o); simB = new THREE.WebGLRenderTarget(SIMN, SIMN, o);
+  const cc = renderer.getClearColor(new THREE.Color()), ca = renderer.getClearAlpha();
+  renderer.setRenderTarget(simA); renderer.setClearColor(0x000000,1); renderer.clear();
+  renderer.setRenderTarget(simB); renderer.clear();
+  renderer.setRenderTarget(null); renderer.setClearColor(cc, ca); }
+makeSim();
+const simMat = new THREE.ShaderMaterial({
+  uniforms: { tPrev:{value:null}, uTexel:{value:new THREE.Vector2(1/SIMN,1/SIMN)}, uDamp:{value:0.991}, uC:{value:0.25},
+    uCur:{value:new THREE.Vector2(-9,-9)}, uPrev:{value:new THREE.Vector2(-9,-9)}, uDrop:{value:0.0} },
+  vertexShader:`varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+  fragmentShader:`varying vec2 vUv; uniform sampler2D tPrev; uniform vec2 uTexel,uCur,uPrev; uniform float uDamp,uC,uDrop;
+    void main(){ vec4 c=texture2D(tPrev,vUv); float h=c.r, ph=c.g;
+      float l=texture2D(tPrev,vUv-vec2(uTexel.x,0.0)).r, r=texture2D(tPrev,vUv+vec2(uTexel.x,0.0)).r;
+      float u=texture2D(tPrev,vUv-vec2(0.0,uTexel.y)).r, d=texture2D(tPrev,vUv+vec2(0.0,uTexel.y)).r;
+      float nh=(2.0*h - ph + uC*(l+r+u+d-4.0*h))*uDamp;
+      if(uDrop>0.0){ vec2 pa=uCur-uPrev; float L=max(dot(pa,pa),1e-6); float t=clamp(dot(vUv-uPrev,pa)/L,0.0,1.0);
+        float dd=distance(vUv, uPrev+pa*t); nh += uDrop*exp(-dd*dd*16000.0); }   // tighter injection → smaller ripples; along the segment (no gaps)
+      gl_FragColor=vec4(nh, h, 0.0, 1.0); }`
+});
+const simQuad = new FullScreenQuad(simMat);
+const _wplane = new THREE.Plane(new THREE.Vector3(0,1,0), -WATER_Y), _wray = new THREE.Raycaster(), _wndc = new THREE.Vector2(), _wpt = new THREE.Vector3();
+const _ripCur = new THREE.Vector2(-9,-9), _ripPrev = new THREE.Vector2(-9,-9); let _ripMoved = false;
+// PERF: pointermove can fire at 120–250Hz — just record the position; the raycast runs once per frame.
+let _rpX = 0, _rpY = 0, _rpDirty = false;
+addEventListener('pointermove', ev => { _rpX = ev.clientX; _rpY = ev.clientY; _rpDirty = true; });
+let _lastSeaHit = -1e9;
+function pollRipplePointer(now){
+  if (!_rpDirty) return; _rpDirty = false;
+  _wndc.set((_rpX/innerWidth)*2-1, -(_rpY/innerHeight)*2+1); _wray.setFromCamera(_wndc, cam);
+  if (!_wray.ray.intersectPlane(_wplane, _wpt)) return;
+  if (depthAt(_wpt.x + HALF, _wpt.z + HALF) > 0) return;   // cursor over the island (land) → no ripple, only sea ripples
+  const u = _wpt.x/(2*SIMH)+0.5, v = _wpt.z/(2*SIMH)+0.5;
+  if (u<0||u>1||v<0||v>1) return;
+  _ripCur.set(u, v);
+  if (now - _lastSeaHit > 250) _ripPrev.copy(_ripCur);   // re-entering the sea after a gap → inject a point, not a line dragged across the map
+  _lastSeaHit = now; _ripMoved = true;
+}
+function stepSim(){
+  simMat.uniforms.tPrev.value = simA.texture;
+  if (_ripMoved){ simMat.uniforms.uCur.value.copy(_ripCur); simMat.uniforms.uPrev.value.copy(_ripPrev); simMat.uniforms.uDrop.value = 0.9; _ripPrev.copy(_ripCur); _ripMoved = false; }
+  else simMat.uniforms.uDrop.value = 0.0;
+  renderer.setRenderTarget(simB); simQuad.render(renderer); renderer.setRenderTarget(null);
+  const t = simA; simA = simB; simB = t;
+}
+// PERF: the sim SLEEPS while the water is calm — no touch for 8s (residual amplitude ≈1%) clears the
+// field once and stops stepping; the first touch wakes it. uRippleOn also skips the shader's 5 taps.
+const SIM_SLEEP_MS = 8000;
+let _simIdle = true, _simLastInject = -1e9;
+function clearSim(){ const cc = renderer.getClearColor(new THREE.Color()), ca = renderer.getClearAlpha();
+  renderer.setRenderTarget(simA); renderer.setClearColor(0x000000,1); renderer.clear();
+  renderer.setRenderTarget(simB); renderer.clear();
+  renderer.setRenderTarget(null); renderer.setClearColor(cc, ca); }
+function simTick(now){
+  if (_ripMoved){ _simIdle = false; _simLastInject = now; }   // wake on touch (segment start already snapped by the sea-gap rule)
+  if (!_simIdle){
+    stepSim();
+    if (now - _simLastInject > SIM_SLEEP_MS){ clearSim(); _simIdle = true; }
+  }
+  waterPass.uniforms.uRippleOn.value = _simIdle ? 0.0 : 1.0;
+}
+
+const composer = new EffectComposer(renderer);
+composer.addPass(waterPass);
+composer.addPass(godrays);   // invisible-source shafts over the island + water composite
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth*0.5,innerHeight*0.5), 0.30, 0.6, 0.72);   // half-res bloom (cheaper, still soft)
+composer.addPass(bloom);
+composer.addPass(vgPass);
+composer.addPass(new OutputPass());
+
+/* ===== time-of-day: calm, misty, pastel palettes lerped by the viewer's local clock ===== */
+/* the water reflects the sky, so lifting the sky to pastel is what makes the water gorgeous. */
+const _lin = h => new THREE.Color(h).convertSRGBToLinear();
+const TIMEKF = [
+  // deep night — misty, moonlit; dark tropical teal water
+  { h:0,    top:'#35324e', mid:'#2c2842', bot:'#423c5e', glow:'#8484b6', glowInt:0.55,
+    fog:'#3b3659', fogN:300, fogF:560, deep:'#213f4c', shallow:'#5c8a9a', sun:'#bccaf0', sunI:1.45, envI:0.8,
+    expo:1.0, moon:1, refl:0.72, bloom:0.34, phase:0.15, gray:0.11 },
+  // dawn (daybreak) — soft pastel daybreak: periwinkle deep, peach-pink shallows, no brick-red water
+  { h:6.5,  top:'#9088c2', mid:'#c0b2ce', bot:'#e2cbd2', glow:'#f0c6c2', glowInt:0.5,
+    fog:'#dcc9d2', fogN:320, fogF:590, deep:'#63668e', shallow:'#b4b4ce', sun:'#ffd2c0', sunI:1.8, envI:0.94,
+    expo:1.05, moon:0, refl:0.75, bloom:0.32, phase:0.08, gray:0.09 },
+  // day — TROPICAL: bright blue sky, turquoise/aqua water (peak brightness)
+  { h:12,   top:'#6fb2e6', mid:'#a8d8ec', bot:'#d6efe6', glow:'#fff2da', glowInt:0.44,
+    fog:'#d2ebe6', fogN:350, fogF:630, deep:'#1f97a8', shallow:'#8adfd4', sun:'#fff6ec', sunI:2.4, envI:1.22,
+    expo:1.14, moon:0, refl:0.72, bloom:0.28, phase:0.5, gray:0.11 },
+  // afternoon (~4pm) — STILL bright tropical; the warm sunset only begins after this
+  { h:16,   top:'#74b0e0', mid:'#abd6e8', bot:'#dcecdf', glow:'#ffeede', glowInt:0.46,
+    fog:'#d6e6e2', fogN:345, fogF:620, deep:'#268fa0', shallow:'#84d8cf', sun:'#fff0dc', sunI:2.3, envI:1.16,
+    expo:1.12, moon:0, refl:0.72, bloom:0.29, phase:0.72, gray:0.11 },
+  // sunset — pastel dusk: periwinkle zenith → rose mid → peach horizon. Water stays a COOL indigo-slate
+  // deep with soft-rose shallows (two-tone, not one warm mass); LOW refl so the blue body shows through
+  // the warm sky reflection — the god-ray shafts then read as warm gold ON blue, a real dusk-over-sea look
+  { h:18.5, top:'#6f78b8', mid:'#9a92c6', bot:'#cdb4d2', glow:'#e7b2b8', glowInt:0.32,
+    fog:'#b0aacb', fogN:320, fogF:590, deep:'#2e4c78', shallow:'#7f88b4', sun:'#ffd4c2', sunI:1.66, envI:0.94,
+    expo:1.05, moon:0, refl:0.5, bloom:0.30, phase:0.94, gray:0.055 },
+];
+const KF = TIMEKF.map(k => ({ ...k, _top:_lin(k.top), _mid:_lin(k.mid), _bot:_lin(k.bot), _glow:_lin(k.glow),
+  _fog:new THREE.Color(k.fog), _deep:_lin(k.deep), _shallow:_lin(k.shallow), _sun:_lin(k.sun) }));
+KF.push({ ...KF[0], h:24 });   // wrap midnight→midnight
+const _mix = (a,b,t) => a + (b-a)*t;
+function lerpTime(hr){
+  let a=KF[0], b=KF[KF.length-1];
+  for (let i=0;i<KF.length-1;i++){ if (hr>=KF[i].h && hr<=KF[i+1].h){ a=KF[i]; b=KF[i+1]; break; } }
+  const t=(hr-a.h)/((b.h-a.h)||1), C=(x,y)=>x.clone().lerp(y,t), N=(x,y)=>_mix(x,y,t);
+  return { top:C(a._top,b._top), mid:C(a._mid,b._mid), bot:C(a._bot,b._bot), glow:C(a._glow,b._glow), glowInt:N(a.glowInt,b.glowInt),
+    fog:C(a._fog,b._fog), fogN:N(a.fogN,b.fogN), fogF:N(a.fogF,b.fogF), deep:C(a._deep,b._deep), shallow:C(a._shallow,b._shallow),
+    sun:C(a._sun,b._sun), sunI:N(a.sunI,b.sunI), envI:N(a.envI,b.envI), expo:N(a.expo,b.expo), moon:N(a.moon,b.moon),
+    refl:N(a.refl,b.refl), bloom:N(a.bloom,b.bloom), phase:N(a.phase,b.phase), gray:N(a.gray,b.gray) };
+}
+function applyTime(hr){
+  const P=lerpTime(hr), bu=backdrop.material.uniforms;
+  bu.uTop.value.set(P.top.r,P.top.g,P.top.b); bu.uMid.value.set(P.mid.r,P.mid.g,P.mid.b); bu.uBot.value.set(P.bot.r,P.bot.g,P.bot.b);
+  bu.uGlowCol.value.set(P.glow.r,P.glow.g,P.glow.b); bu.uGlowInt.value=P.glowInt;
+  scene.fog.color.copy(P.fog); scene.fog.near=P.fogN; scene.fog.far=P.fogF;
+  scene.background.copy(P.bot).multiplyScalar(0.55);
+  // sun/moon arc across the sky by the hour
+  // sun placed by SCREEN intent: high up (+y), toward screen-up on the ground (skyBack) so shadows fall
+  // DOWN-screen away from it, and swung left↔right (skyRight) by the hour. Glow & shadows now agree.
+  const az = (P.phase-0.5)*Math.PI*0.92, side = Math.sin(az) * 0.85;   // dawn = left, noon = top, dusk = right
+  SUN_DIR.copy(skyBack).multiplyScalar(0.5).addScaledVector(skyRight, side).setY(0.92).normalize();
+  SUN_POS.copy(SUN_DIR).multiplyScalar(180);
+  sun.position.copy(SUN_DIR).multiplyScalar(120); sun.color.copy(P.sun); sun.intensity=P.sunI; sun.target.updateMatrixWorld();
+  hemi.color.copy(P.sun); hemi.intensity=_mix(0.85,0.6,P.moon);
+  scene.environmentIntensity=P.envI; renderer.toneMappingExposure=P.expo;
+  // warm night lights (lamp globes + lit windows): off in daylight, glowing from dusk through dawn
+  const dayness = THREE.MathUtils.smoothstep(hr,5.5,8.0) * (1.0 - THREE.MathUtils.smoothstep(hr,17.0,19.5));
+  if (warmMat) warmMat.emissiveIntensity = 0.10 + (1.0-dayness)*2.15;
+  waterPass.uniforms.uDeep.value.copy(P.deep); waterPass.uniforms.uShallow.value.copy(P.shallow);
+  waterPass.uniforms.uSunCol.value.set(P.sun.r,P.sun.g,P.sun.b); waterPass.uniforms.uReflAmt.value=P.refl;
+  godrays.uniforms.uColor.value.set(P.sun.r,P.sun.g,P.sun.b);   // shafts share the sun/moon color (warm-white ↔ blue-white)
+  rayGenMat.uniforms.exposure.value = P.gray;                   // dampened at dusk so the shafts don't wash the whole sea warm
+  bu.uGlowDir.value.copy(SUN_DIR); bloom.strength=P.bloom;
+  renderer.shadowMap.needsUpdate=true; _rtDirty=true;   // refresh the frozen shadow + island RT for the new light
+}
+const _tq = new URLSearchParams(location.search).get('t');
+function nowHour(){ if(_tq==='day')return 12; if(_tq==='night')return 0; if(_tq==='dawn')return 6.5; if(_tq==='dusk')return 18.5;
+  const n=parseFloat(_tq); if(!isNaN(n)) return n;   // ?t=15.7 → exact hour (dev)
+  const d=new Date(); return d.getHours()+d.getMinutes()/60; }
+applyTime(nowHour());
+setInterval(() => applyTime(nowHour()), 60000);   // keep synced to the viewer's clock
+
+const _sp = new THREE.Vector3();
+function updateGodrays(){
+  _sp.copy(SUN_POS).project(cam); const ux=_sp.x*0.5+0.5, uy=_sp.y*0.5+0.5;
+  rayGenMat.uniforms.lightPos.value.set(ux, uy);
+  rayGenMat.uniforms.tIsland.value = islandRT.texture;
+  rayGenMat.uniforms.uAspect.value = innerWidth/innerHeight;
+  const inF = _sp.z<1.0 ? 1.0 : 0.0;   // keep rays even when the (invisible) sun sits just past the frame edge
+  const onX = THREE.MathUtils.smoothstep(ux,-0.7,-0.1)*(1.0-THREE.MathUtils.smoothstep(ux,1.1,1.7));
+  const onY = THREE.MathUtils.smoothstep(uy,-0.7,-0.1)*(1.0-THREE.MathUtils.smoothstep(uy,1.1,1.7));
+  godrays.uniforms.uLightOn.value = inF*onX*onY;
+  godrays.uniforms.tRay.value = rayRT.texture;
+}
+function renderRays(){   // half-res shaft prepass — skipped entirely when the light is off-frame
+  if (godrays.uniforms.uLightOn.value <= 0.001) return;
+  renderer.setRenderTarget(rayRT); rayQuad.render(renderer); renderer.setRenderTarget(null);
+}
+
+// ── floating zone labels (DOM) ──
+// colored halo built from a label's own accent → the glow matches the section color
+const glowRGBA = (hex, a) => { const n = parseInt(hex.slice(1),16); return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; };
+const labelEls = {};
+for (const z in ZINFO){ const el=document.createElement('div'); el.className='zone-label'; el.textContent=ZINFO[z].label;
+  const col=ZINFO[z].color; el.style.color=col;
+  el.style.textShadow=`0 2px 10px rgba(0,0,0,.72), 0 0 14px ${glowRGBA(col,.95)}, 0 0 30px ${glowRGBA(col,.6)}, 0 0 54px ${glowRGBA(col,.38)}`;
+  document.body.appendChild(el); labelEls[z]=el; }
+// building name → its zone's accent color, so building labels read like the section header
+const BCOL = {}; for (const z in ZONES) for (const k of ZONES[z].members) BCOL[k]=ZONES[z].color;
+const bldgEls = {};
+for (const [key] of LAYOUT){ const el=document.createElement('div'); el.className='bldg-label'; el.textContent=BNAMES[key]||key;
+  const col=BCOL[key]||'#e4ecf6'; el.style.color=col;
+  el.style.textShadow=`0 2px 8px rgba(0,0,0,.82), 0 0 11px ${glowRGBA(col,.85)}, 0 0 24px ${glowRGBA(col,.5)}`;
+  document.body.appendChild(el); bldgEls[key]=el; }
+const raftEl = document.createElement('div'); raftEl.className='raft-label'; raftEl.textContent='back';
+document.body.appendChild(raftEl);
+const _v = new THREE.Vector3();
+const toScreen = el => { el.style.left=((_v.x*0.5+0.5)*innerWidth)+'px';
+  el.style.top=Math.max(52, (-_v.y*0.5+0.5)*innerHeight)+'px'; };   // clamp below the hud/back button (tall models: the robot)
+function updateLabels(){
+  // zone labels — only in overview
+  const zShow = viewState==='overview';
+  for (const z in ZINFO){ const el=labelEls[z];
+    if (!zShow){ el.style.opacity=0; continue; }
+    _v.set(ZINFO[z].cx, 13, ZINFO[z].cz).project(cam); toScreen(el);
+    el.style.opacity = z===hoveredZone ? 1 : 0.9;
+    el.style.transform = `translate(-50%,-50%) scale(${z===hoveredZone?1.18:1})`; }
+  // raft "back" label — floats over the log raft in overview
+  if (zShow){ _v.set(RAFT_W.x, 3.2, RAFT_W.z).project(cam); toScreen(raftEl);
+    raftEl.style.opacity = raftHover ? 1 : 0.85;
+    raftEl.style.transform = `translate(-50%,-50%) scale(${raftHover?1.18:1})`; }
+  else raftEl.style.opacity = 0;
+  // building name labels — only in the active zone (zone view)
+  for (const [key, gx, gy] of LAYOUT){ const el=bldgEls[key];
+    const bShow = viewState==='zone' && ZONES[activeZone]?.members.includes(key);
+    if (!bShow){ el.style.opacity=0; continue; }
+    _v.set(wx(gx+1), (HEIGHTS[key]||14)+3.5, wz(gy+1)).project(cam); toScreen(el);
+    el.style.opacity = key===hoveredBldg ? 1 : 0.92;
+    el.style.transform = `translate(-50%,-50%) scale(${key===hoveredBldg?1.14:1})`; } }
+
+// ── content panel ──
+const CONTENT = {
+  art:           { title:'art',                   url:'/creative' },
+  blog1:         { title:'recent posts',          url:'/blog-archive' },
+  cards:         { title:'game design',           url:'/creative' },
+  blog4:         { title:'archive',               url:'/blog-archive' },
+  project1:      { title:'misc',             url:'/cs/misc' },
+  project2:      { title:'game development', url:'/cs/gamedev' },
+  research1:     { title:'robotics',             url:'/cs/research/robotics' },
+  research2:     { title:'ubiquitous computing', url:'/cs/research/ubicomp' },
+  resumeBuilding:{ title:'resume',     url:'/Pages/Materials/Resume_June_28.pdf' },
+  transcript:    { title:'transcript', url:'/Pages/Materials/Transcripts/Aye_transcript_soph.pdf' },
+  infobuilding:  { title:'about me', url:'/' },   // the pastel-green folder shows the real homepage
+};
+const panel = document.getElementById('panel');
+const pbody = panel.querySelector('.pbody');
+// per-zone folder color (creative = beige, then pastels): the cover + folder body tint to this.
+const FOLDER = { creative:'#e7d6a6', about:'#c3ddb6', projects:'#f2cea0', materials:'#bcd4ec', research:'#d7c5e9' };
+// building click → the folder cover slides down to reveal the LIVE page inside.
+let _hideT = 0;
+function showPanel(key){ const c = CONTENT[key] || { title:key };
+  clearTimeout(_hideT); panel.classList.remove('exit');                   // cancel any in-flight close
+  panel.querySelector('.ptitle').textContent = '> ' + (c.title || key);
+  panel.style.setProperty('--accent', ZONES[activeZone]?.color || '#a8c7fa');
+  panel.style.setProperty('--folder', FOLDER[activeZone] || '#e7d6a6');
+  pbody.classList.remove('loaded','pad');
+  if (c.url){ pbody.innerHTML = `<iframe src="${c.url}"></iframe>`;        // live iframe → generalizable to any page
+    pbody.querySelector('iframe').addEventListener('load', () => pbody.classList.add('loaded'), { once:true }); }
+  else { pbody.classList.add('pad'); pbody.innerHTML = c.html || ''; }
+  panel.classList.add('active');                                          // closed folder appears…
+  requestAnimationFrame(() => requestAnimationFrame(() => panel.classList.add('open')));   // …cover slides open
+}
+// close = the WHOLE folder slides smoothly down off the screen (not the cover re-closing then vanishing)
+function hidePanel(){ panel.classList.add('exit');
+  _hideT = setTimeout(() => { panel.classList.remove('active','open','exit'); pbody.innerHTML=''; pbody.classList.remove('loaded'); }, 620); }
+
+// ── state machine ──
+let viewState = 'overview', activeZone = null, hoveredZone = null, hoveredBldg = null;
+const backBtn = document.getElementById('back');
+function showBack(){ backBtn.classList.toggle('show', viewState !== 'overview'); }
+// ── the log raft (screen bottom-left, on the water) sails you back to the CRT lobby ──
+const RAFT_W = { x: RAFT.X - HALF, z: RAFT.Z - HALF };
+let raftHover = false, _leaving = false;
+function overRaft(){ return Math.hypot(hitPt.x - RAFT_W.x, hitPt.z - RAFT_W.z) < 8; }   // hitPt = last ground raycast
+function goToMonitor(){ if (_leaving) return; _leaving = true;
+  document.getElementById('fade').classList.add('on');
+  tweenTo(cur.t.clone(), cur.span * 1.22);                        // gentle pull-back while the room fades in
+  setTimeout(() => { window.location.href = '/crt3d'; }, 520); }
+
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), hitPt = new THREE.Vector3();
+const groundPlane = new THREE.Plane(new THREE.Vector3(0,1,0), 0);
+function groundGrid(ev){ ndc.x=(ev.clientX/innerWidth)*2-1; ndc.y=-(ev.clientY/innerHeight)*2+1; ray.setFromCamera(ndc, cam);
+  if (!ray.ray.intersectPlane(groundPlane, hitPt)) return null; return { gx:(hitPt.x+HALF)/TILE, gy:(hitPt.z+HALF)/TILE }; }
+function pickBldg(ev){ let best=null, bd=1e9; const keys = activeZone ? ZONES[activeZone].members : LAYOUT.map(l=>l[0]);
+  for (const key of keys){ const e=LAYOUT.find(l=>l[0]===key); if(!e)continue;
+    _v.set(wx(e[1]+1), 5, wz(e[2]+1)).project(cam); const px=(_v.x*0.5+0.5)*innerWidth, py=(-_v.y*0.5+0.5)*innerHeight;
+    const dd=Math.hypot(px-ev.clientX, py-ev.clientY); if(dd<bd){ bd=dd; best={key,gx:e[1],gy:e[2]}; } }
+  const rad = Math.max(48, innerHeight*6/cur.span); return best && bd<rad ? best : null; }
+
+function enterZone(z){
+  if (z==='about'){   // about = a single building: one click zooms (zone-level) AND opens the green folder
+    activeZone='about'; hoveredZone=null; setBorder(null);
+    const e=LAYOUT.find(l=>l[0]==='infobuilding'); openBuilding('infobuilding', e[1], e[2]); return; }
+  activeZone=z; viewState='zone'; hoveredZone=null; setBorder(null);
+  tweenTo(new THREE.Vector3(ZINFO[z].cx, 4, ZINFO[z].cz), ZINFO[z].span); showBack(); need=true; }
+function openBuilding(key, gx, gy){ viewState='building'; hoveredBldg=null; setRing(null);
+  const span = key==='infobuilding' ? ZINFO.about.span : 13;   // about zooms only to zone level (not fully in)
+  tweenTo(new THREE.Vector3(wx(gx+1), 6, wz(gy+1)), span); showPanel(key); showBack(); need=true; }
+function back(){ hidePanel();
+  if (viewState==='building' && activeZone==='about'){   // about opened straight from overview → go straight back
+    viewState='overview'; activeZone=null; hoveredBldg=null; setRing(null); tweenTo(OVERVIEW.t.clone(), OVERVIEW.span); }
+  else if (viewState==='building'){ viewState='zone'; const z=activeZone; tweenTo(new THREE.Vector3(ZINFO[z].cx,4,ZINFO[z].cz), ZINFO[z].span); }
+  else if (viewState==='zone'){ viewState='overview'; activeZone=null; hoveredBldg=null; setRing(null); tweenTo(OVERVIEW.t.clone(), OVERVIEW.span); }
+  showBack(); need=true; }
+
+// PERF: hover picking runs once per frame off recorded coords (pointermove can fire at 120–250Hz)
+let _hvX = 0, _hvY = 0, _hvDirty = false, _cursor = '';
+renderer.domElement.addEventListener('pointermove', ev => { _hvX = ev.clientX; _hvY = ev.clientY; _hvDirty = true; });
+function setCursor(c){ if (c !== _cursor){ _cursor = c; document.body.style.cursor = c; } }
+function pollHover(){
+  if (!_hvDirty) return; _hvDirty = false;
+  const ev = { clientX:_hvX, clientY:_hvY };
+  if (viewState==='overview'){ const g=groundGrid(ev); const z=g?zoneAt(Math.floor(g.gx),Math.floor(g.gy)):null;
+    const r=!!g && overRaft();
+    if (r!==raftHover){ raftHover=r; _uiDirty=true; }
+    if (z!==hoveredZone){ hoveredZone=z; setBorder(z); need=true; _rtDirty=true; _uiDirty=true; } setCursor((z||r)?'pointer':'default'); }
+  else if (viewState==='zone'){ const b=pickBldg(ev); const k=b?b.key:null;
+    if (k!==hoveredBldg){ hoveredBldg=k; setRing(k); need=true; _rtDirty=true; _uiDirty=true; } setCursor(k?'pointer':'default'); }
+  else setCursor('default');
+}
+renderer.domElement.addEventListener('click', ev => {
+  if (viewState==='overview'){ const g=groundGrid(ev);
+    if (g && overRaft()){ goToMonitor(); return; }
+    const z=g?zoneAt(Math.floor(g.gx),Math.floor(g.gy)):null; if (z) enterZone(z); }
+  else if (viewState==='zone'){ const b=pickBldg(ev); if (b) openBuilding(b.key, b.gx, b.gy); else back(); }
+  else if (viewState==='building'){ back(); }
+});
+backBtn.addEventListener('click', back);
+panel.querySelector('.pclose').addEventListener('click', back);
+addEventListener('keydown', e => { if (e.key==='Escape') back(); });
+
+// debug handles for screenshots
+Object.assign(window, { cam, scene, renderer, enterZone, openBuilding, back,
+  hoverZone: z => { viewState='overview'; hoveredZone=z; setBorder(z); need=true; _rtDirty=true; _uiDirty=true; },
+  _state: () => ({ viewState, activeZone, hoveredZone }) });
+
+const hudEl = document.getElementById('hud');
+function hud(){ hudEl.textContent = `voxmap · ${counts.tris.toLocaleString()} tris · ${renderer.info.render.calls} calls · ${viewState}${activeZone?' · '+activeZone:''}`; }
+
+let _frameNo = 0;
+function draw(now){
+  pollRipplePointer(now); pollHover();                     // pointer work coalesced to once per frame
+  simTick(now);                                            // ripple field: steps only while awake, sleeps when calm
+  updateWaterUniforms();
+  // re-render the SCENE RTs only when they changed; the hover PULSE (a slow opacity sine) refreshes at
+  // half rate — imperceptible on a ~1.3s pulse, halves the hover cost. Idle frames re-run only the
+  // cheap water + post chain.
+  if (_rtDirty || anim || ((hoveredZone || hoveredBldg) && (_frameNo & 1) === 0)){
+    renderRTs(!(_rtDirty || anim)); if (!anim) _rtDirty = false; }   // pulse-only refresh skips the sky RT
+  if (anim || _uiDirty){ updateLabels(); hud(); _uiDirty = false; }   // DOM writes only when something changed
+  updateGodrays(); renderRays(); composer.render();
+  if (!firstRendered){ renderer.shadowMap.autoUpdate = false; firstRendered = true; } }
+// water animates every frame; the expensive island/sky renders are cached above
+let _t0 = performance.now(), _clk = 0;
+function loop(now){ requestAnimationFrame(loop);
+  if (anim){ const k=Math.min(1,(performance.now()-anim.t0)/anim.dur), e=ease(k);
+    cur.t.lerpVectors(anim.fromT, anim.toT, e); cur.span = anim.fromSpan + (anim.toSpan-anim.fromSpan)*e; applyCam(); if (k>=1){ anim=null; _rtDirty=true; _uiDirty=true; } }
+  if (hoveredZone) borderMat.opacity = 0.72 + 0.13*Math.sin(performance.now()*0.005);   // floor >0.5 so the rim never sinks under the water
+  if (hoveredBldg) ringMat.opacity   = 0.85 + 0.15*Math.sin(performance.now()*0.006);
+  waterPass.uniforms.uTime.value += (now - _t0) * 0.0004; _t0 = now; _clk += 0.016;
+  vgPass.uniforms.time.value = _clk; rayGenMat.uniforms.uTime.value = _clk;
+  draw(now); _frameNo++;
+}
+requestAnimationFrame(loop);
+addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight);
+  makeRTs(innerWidth, innerHeight); makeRayRT(innerWidth, innerHeight); bloom.resolution.set(innerWidth*0.5, innerHeight*0.5); applyCam(); need=true; _rtDirty=true; _uiDirty=true; });
+
+/* film-grain overlay texture (generated once) */
+{ const gc=document.createElement('canvas'); gc.width=gc.height=160; const g=gc.getContext('2d');
+  const id=g.createImageData(160,160), d=id.data;
+  for(let i=0;i<d.length;i+=4){ const v=Math.random()*255; d[i]=d[i+1]=d[i+2]=v; d[i+3]=255; }
+  g.putImageData(id,0,0); document.getElementById('grain').style.backgroundImage=`url(${gc.toDataURL()})`; }
+</script>
+</body>
+</html>

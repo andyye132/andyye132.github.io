@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Encore — Andy Ye</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #fbfaf6; color: #1d1d1b; font-family: Georgia, 'Times New Roman', serif; font-size: 16.5px; line-height: 1.75; }
+  ::selection { background: #1c3aa9; color: #fff; }
+  a { color: #1c3aa9; }
+
+  .masthead { text-align: center; padding: 2.6rem 1rem 1.3rem; }
+  .masthead h1 { font-size: 2.5rem; font-weight: 700; color: #a09b92; letter-spacing: .02em; }
+  .masthead h1 a { color: inherit; text-decoration: none; }
+
+  nav.bar { border-top: 3px solid #ccc8c0; border-bottom: 3px solid #ccc8c0; background: #fffefb; }
+  nav.bar ul { list-style: none; display: flex; justify-content: space-around; flex-wrap: wrap; max-width: 780px; margin: 0 auto; }
+  nav.bar a { display: block; padding: .5rem 1.6rem; color: #1c3aa9; font-size: 1.05rem; text-decoration: none; }
+  nav.bar a:hover { text-decoration: underline; }
+  nav.bar .here { font-weight: 700; }
+
+  main { max-width: 720px; margin: 0 auto; padding: 2.5rem 1.4rem 4rem; }
+  .crumb { font-size: .9rem; margin-bottom: 1rem; }
+  h2.title { font-size: 1.6rem; margin-bottom: .2rem; }
+  .sub { font-style: italic; color: #8d887e; margin-bottom: 1.6rem; }
+  .prose p { margin-bottom: 1.1rem; }
+  .prose ul, .prose ol { margin: 0 0 1.1rem 1.5rem; }
+  .prose li { margin-bottom: .4rem; }
+  .prose ul ul, .prose ol ol { margin-top: .4rem; margin-bottom: .4rem; }
+
+  footer { text-align: center; padding: 0 1rem 3rem; font-family: 'Courier New', Courier, monospace;
+    color: #b5afa4; font-size: .8rem; }
+
+  @media (max-width: 640px) {
+    .masthead h1 { font-size: 1.9rem; }
+    nav.bar a { padding: .45rem .9rem; font-size: .95rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead"><h1><a href="/">Andy Ye</a></h1></header>
+<nav class="bar">
+  <ul>
+    <li><a href="/">home</a></li>
+    <li><a href="/blog-archive">blog</a></li>
+    <li><a class="here" href="/cs">projects/research</a></li>
+    <li><a href="/creative">creative</a></li>
+    <li><a href="/cv">cv</a></li>
+  </ul>
+</nav>
+
+<main>
+  <p class="crumb"><a href="/cs/gamedev">&larr; game development</a></p>
+  <h2 class="title">CURRENT: Encore</h2>
+  <p class="sub">braindump. still in progress</p>
+
+  <div class="prose">
+    <p>This will be like a 2d looter shooter, formatted like mario-ish, running from left to right independently of the opponent player. I am thinking the aesthetic can be a goofy ish silksong.</p>
+
+    <p>Each character will have a auto attack, a Q ability, and an ultimate ability. Like brawl stars…</p>
+
+    <p>Both players will be running through their own level, not a mirror level but rather one with equal distance and obstacle difficulty. These can be procedurally generated…</p>
+
+    <p>As you run through the level, you will defeat enemies and open chests. You might lose health or lose lives, but if you do this then you might get better items. Now this sounds like your standard 2d platformer looter shooter. But here is where it gets interesting…</p>
+
+    <p>Player A is in player A world, Player B is in player B world. These two different worlds have different terrains right? But they share the same length. As player A runs, he pulls the curtain on player B's world. Think about it like the terraria wall of flesh closing in from the left side; the further player A is along in his world, player B's world curtain (on the left side) gets drawn in faster and faster. This adds time pressure to the game, if a player wants to just take their time and loot but the other player doesn't let them because they're just trying to run ahead as fast as possible, then this is a valid play style.</p>
+
+    <p>After both players finish their runs, they are transported to an arena. In this arena, they must fight each other.</p>
+    <ul>
+      <li>I was honestly thinking maybe they could fight each other in unique ways? Maybe there is a wheel. Maybe some of the abilities you get can help your luck or movement or things like that. What if the duels are not just one versus one's to the death using damage abilities (though that will definitely be part of it) but rather almost mini-game like things?</li>
+      <li>Or maybe, players each roll a wheel and then those two options are presented. Then players can choose to vote options!</li>
+    </ul>
+
+    <p>The main problem with a wheel is that people will have to be able to prep for this… Oh here is a better idea! The wheel roll happens before each runner level. This way, players can prepare for each level of this stuff.</p>
+
+    <p>Also, the wheel starts with say, 5 options as rolls. As options are chosen, they are removed from the wheel. This way players can hedge their bets to later options.</p>
+
+    <p>Curtain makes this theme even more interesting. Maybe there is an audience to appease, and bonuses if you perform certain actions when fighting. Maybe you want to be a showman? How can we turn the minigames into showman adjacent..?</p>
+    <ul>
+      <li>What if you can win if you just put on a good enough show? So then there must be some sort of skill or metric the audience uses to rate shows.</li>
+      <li>This might be too many layers (?) or actually maybe it makes the whole thing better. But imagine if there was a set of judges that rotate for each game — so you're playing for something different every time. So the games are different, and the judges are different. So it's a lot of nuance. We can start with the judges being the same, but my vision for that is pretty simple:
+        <ul>
+          <li>There will be 3 judges. Each judge will provide a score to each player (0-10) based on their specific criteria. Maybe Harold likes close fights or just close battles; how close is the difference between the winner and the loser? Harold then always would favor the weaker player. Actually maybe Harold sucks as a concept since he will always give equal amounts of players to each point… Maybe someone else likes when people do damage or sabotage, and give points based on that. Maybe another person likes grace and accuracy, and penalizes how many attacks/things you miss. These are all criteria that you are evaluated on, and determines how who wins the round!</li>
+        </ul>
+      </li>
+    </ul>
+
+    <p>So this is the gameloop:</p>
+    <ol>
+      <li>Both players select their characters. Each character has two abilities and a unique auto-attack. Most games will be fighting based — we can take inspiration from minecraft minigames then(?)</li>
+      <li>Characters walk to the stage and are presented with the 5 games they might play. The first player to reach 3 wins, wins. They roll the wheel and the theme of the first game is provided. Then, they go into intermission… they jump into their interdimensional portals and gear up</li>
+      <li>They loot for 4 minutes. Running from left to right, the wall is scheduled to finish the course in 4 minutes, but a player who wants to run faster will drag the wall faster with them, right?
+        <ol>
+          <li>If the wall hits a player, then they take damage and are launched forwards through the level. Might be useful to think of the level as an obstacle course. The player cannot die to the wall. It doesn't do too much damage.</li>
+          <li>The wall shouldn't move much faster/match the other players. It should just exponentially speed up dependent on how far away the other player is. So if they are really far it'll go super fast but then slow down exponentially as it gets closer. Not a crazy exponential curve maybe only the first bit of it.</li>
+        </ol>
+      </li>
+      <li>Once both players reach the end of the level they are teleported back to the theater. Their health remains the same as how they exited the intermission stage.</li>
+      <li>They then play the game. The judges rate them, and they get points or whatever based on the ratings (?) I am thinking of doing something like rounds where one player can't get too ahead. Though will have to see how the games work cause a player might get ahead in one game… AHA i figured it out!!! maybe the loser can pick the next game! That is a reasonable self balancing act.</li>
+      <li>Players return to full health and enter intermission again.</li>
+    </ol>
+
+    <p>So again, the loop is</p>
+    <ol>
+      <li>Pick character</li>
+      <li>First spin</li>
+      <li>Intermission</li>
+      <li>Fight</li>
+      <li>Scores</li>
+      <li>Spin/pick next game</li>
+      <li>Intermission</li>
+    </ol>
+
+    <p>So intermission + fight + scores should be like 5-6 minutes each. So a full 5 round game would be 30 minutes.</p>
+
+    <p>AHHH and something cool could be an encore system. If a player absolutely dogs on another player they can ask for an encore if their rating is good enough (?) The game can thus be called encore?</p>
+  </div>
+</main>
+
+<footer>© 2026 andy ye · seattle, wa</footer>
+
+</body>
+</html>

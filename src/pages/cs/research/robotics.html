@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portfolio — Andy Ye</title>
+<title>Robotics — Andy Ye</title>
 <link rel="icon" type="image/png" href="/favicon.png">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -22,6 +22,8 @@
   nav.bar .here { font-weight: 700; }
 
   main { max-width: 720px; margin: 0 auto; padding: 2.5rem 1.4rem 4rem; }
+  .crumb { font-size: .9rem; margin-bottom: 1rem; }
+  h2.title { font-size: 1.4rem; margin-bottom: 1rem; }
   .dir { list-style: none; }
   .dir li { padding: .9rem 0; border-bottom: 1px solid #eeeae2; }
   .dir a.title { font-size: 1.2rem; font-weight: 700; text-decoration: none; }
@@ -44,25 +46,23 @@
   <ul>
     <li><a href="/">home</a></li>
     <li><a href="/blog-archive">blog</a></li>
-    <li><a href="/cs">projects/research</a></li>
-    <li><a class="here" href="/creative">creative</a></li>
+    <li><a class="here" href="/cs">projects/research</a></li>
+    <li><a href="/creative">creative</a></li>
     <li><a href="/cv">cv</a></li>
   </ul>
 </nav>
 
 <main>
+  <p class="crumb"><a href="/cs/research">&larr; research</a></p>
+  <h2 class="title">robotics</h2>
   <ul class="dir">
     <li>
-      <a class="title" href="/creative/art">oil painting</a>
-      <div class="about">landscapes, boats, and some abstract pieces. I haven't painted more since high school.</div>
+      <a class="title" href="/cs/research/robotics/argus">CURRENT: ARGUS</a>
+      <div class="about">a heterogenous multi-robot system with interagent communication for optimal tracking and repositioning.</div>
     </li>
     <li>
-      <a class="title" href="/creative/music">music</a>
-      <div class="about">some compositions.</div>
-    </li>
-    <li>
-      <a class="title" href="/creative/games">card games</a>
-      <div class="about">printed and playtested tabletop games, with rules and PDFs.</div>
+      <a class="title" href="/cs/research/robotics/bristle">Bristle: Real Life Trajectory Dataset for Indoor Navigation</a>
+      <div class="about">converting real estate walkthrough videos into training data for embodied AI navigation — at Ai2, with Matt Wallingford.</div>
     </li>
   </ul>
 </main>

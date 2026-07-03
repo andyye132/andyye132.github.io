@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beacon AI — Andy Ye</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #fbfaf6; color: #1d1d1b; font-family: Georgia, 'Times New Roman', serif; font-size: 16.5px; line-height: 1.75; }
+  ::selection { background: #1c3aa9; color: #fff; }
+  a { color: #1c3aa9; }
+
+  .masthead { text-align: center; padding: 2.6rem 1rem 1.3rem; }
+  .masthead h1 { font-size: 2.5rem; font-weight: 700; color: #a09b92; letter-spacing: .02em; }
+  .masthead h1 a { color: inherit; text-decoration: none; }
+
+  nav.bar { border-top: 3px solid #ccc8c0; border-bottom: 3px solid #ccc8c0; background: #fffefb; }
+  nav.bar ul { list-style: none; display: flex; justify-content: space-around; flex-wrap: wrap; max-width: 780px; margin: 0 auto; }
+  nav.bar a { display: block; padding: .5rem 1.6rem; color: #1c3aa9; font-size: 1.05rem; text-decoration: none; }
+  nav.bar a:hover { text-decoration: underline; }
+  nav.bar .here { font-weight: 700; }
+
+  main { max-width: 760px; margin: 0 auto; padding: 2.5rem 1.4rem 4rem; }
+  .crumb { font-size: .9rem; margin-bottom: 1rem; }
+  h2.title { font-size: 1.55rem; line-height: 1.35; margin-bottom: .3rem; }
+  .sub { font-style: italic; color: #8d887e; margin-bottom: 1.4rem; }
+  .tags { font-family: 'Courier New', Courier, monospace; color: #a19b90; font-size: .84rem; margin: 1.2rem 0 1.8rem; }
+  .prose p { margin-bottom: 1.1rem; }
+  h3.sec { font-size: 1.05rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #8d887e;
+    border-bottom: 1px solid #ddd8cf; padding-bottom: .35rem; margin: 2rem 0 .9rem; }
+  .abstract p { text-align: justify; margin-bottom: 1.1rem; }
+  .links { font-size: 1rem; margin: 1.4rem 0; }
+
+  footer { text-align: center; padding: 0 1rem 3rem; font-family: 'Courier New', Courier, monospace;
+    color: #b5afa4; font-size: .8rem; }
+
+  @media (max-width: 640px) {
+    .masthead h1 { font-size: 1.9rem; }
+    nav.bar a { padding: .45rem .9rem; font-size: .95rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead"><h1><a href="/">Andy Ye</a></h1></header>
+<nav class="bar">
+  <ul>
+    <li><a href="/">home</a></li>
+    <li><a href="/blog-archive">blog</a></li>
+    <li><a class="here" href="/cs">projects/research</a></li>
+    <li><a href="/creative">creative</a></li>
+    <li><a href="/cv">cv</a></li>
+  </ul>
+</nav>
+
+<main>
+  <p class="crumb"><a href="/cs/research/ubicomp">&larr; ubiquitous computing</a></p>
+  <h2 class="title">Bernoulli LSE for Efficient CFF Detection with Beacon</h2>
+  <p class="sub">Ubiquitous Computing Lab (UW CSE) · with Richard Li · Oct 2025 — Present</p>
+
+  <div class="prose">
+    <p>BEACON is a mobile health diagnostic tool for measuring Critical Flicker Frequency (CFF) thresholds. I work on Bernoulli Level Set Estimation with Gaussian Processes to efficiently detect CFF thresholds, reducing patient trials from 40–120 down to 20–30 while maintaining diagnostic accuracy.</p>
+    <p>Evaluated EAVC, GlobalMI, LocalMI acquisition functions and built person-specific Oracles for adaptive threshold estimation.</p>
+  </div>
+
+  <p class="tags">python · gaussian processes · psychophysics</p>
+
+  <h3 class="sec">abstract</h3>
+  <div class="abstract">
+    <p>Critical Flicker Frequency (CFF) testing is a clinically validated method for detecting cognitive impairment in patients with conditions such as Hepatic Encephalopathy (HE), where accurate CFF measurement plays a critical role in guiding medication dosage and monitoring disease progression. Current CFF protocols rely on Forced-Choice staircase methods, which require an average of 70 patient queries per session, with individual sessions ranging from 40 to 120 queries. This imposes a significant cognitive burden on patients who are already experiencing impairment, potentially compromising both the reliability of results and patient compliance.</p>
+    <p>We present an adaptive testing approach that applies Gaussian Process classification with Bernoulli Level Set Estimation (LSE) to efficiently identify the 75% detection threshold with substantially fewer trials. We evaluate multiple acquisition functions — including EAVC, GlobalMI, GlobalSUR, LocalMI, LocalSUR, and Straddle — on both simulated psychometric functions and real patient data collected via BEACON, a mobile CFF diagnostic tool developed for accessible testing. To rigorously benchmark these methods, we developed a Python-based simulation framework incorporating person-specific oracles constructed from patient data, enabling controlled comparison of adaptive methods against traditional staircase and forced-choice protocols.</p>
+    <p>Our results demonstrate that LSE-based methods achieve comparable diagnostic accuracy while reducing trial count to approximately 20 queries per session, a reduction of roughly 50 trials on average. These findings suggest that adaptive Bayesian approaches can meaningfully reduce patient burden in psychophysical testing while preserving clinical reliability, with direct implications for improving CFF assessment in cognitively impaired populations.</p>
+  </div>
+
+  <p class="links">[<a href="/Pages/Research/UbiComp/beacon/BEACON_LSE.pdf" download="BEACON_LSE_slides.pdf">download slides (pdf)</a>]</p>
+</main>
+
+<footer>© 2026 andy ye · seattle, wa</footer>
+
+</body>
+</html>

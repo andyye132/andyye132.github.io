@@ -1,0 +1,58 @@
+---
+// Single-building voxel preview. /voxtest?b=infobuilding&spin=1
+---
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>voxel building</title>
+<style>html,body{margin:0;height:100%;background:#0e1014;overflow:hidden}
+#hud{position:fixed;top:8px;left:8px;color:#9fb;font:12px monospace;white-space:pre;z-index:9;text-shadow:0 1px 2px #000}
+#sprite{position:fixed;top:8px;right:8px;width:140px;height:140px;image-rendering:pixelated;border:1px solid #333;z-index:9;background:#222}</style>
+</head>
+<body>
+<div id="hud">loading…</div>
+<canvas id="sprite" width="64" height="64"></canvas>
+<script>
+import * as THREE from 'three';
+import { buildVox } from '../voxbuildings.js';
+import { makeVoxels } from '../voxrender.js';
+
+const P=new URLSearchParams(location.search); const BLD=P.get('b')||'infobuilding';
+const vox=buildVox(BLD);
+
+try{ const sprites=await (await fetch('/voxsprites.json')).json(); const sp=sprites[BLD];
+  if(sp){ const c=document.getElementById('sprite'),x=c.getContext('2d'),img=x.createImageData(sp.w,sp.h);
+    for(let i=0;i<sp.w*sp.h;i++){const h=sp.px[i];if(h){const v=parseInt(h.slice(1),16);img.data[i*4]=(v>>16)&255;img.data[i*4+1]=(v>>8)&255;img.data[i*4+2]=v&255;img.data[i*4+3]=255;}}
+    x.putImageData(img,0,0);} }catch(e){}
+
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(2,devicePixelRatio)); renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.NeutralToneMapping; renderer.toneMappingExposure=1.05;
+document.body.appendChild(renderer.domElement);
+const scene=new THREE.Scene(); scene.background=new THREE.Color('#e9e4ee');
+function envTex(){const c=document.createElement('canvas');c.width=16;c.height=256;const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,0,256);g.addColorStop(0,'#eef4ff');g.addColorStop(0.5,'#cfd6e6');g.addColorStop(0.62,'#aeb6c8');g.addColorStop(1,'#5b6172');
+  x.fillStyle=g;x.fillRect(0,0,16,256);const t=new THREE.CanvasTexture(c);t.mapping=THREE.EquirectangularReflectionMapping;return t;}
+const pmrem=new THREE.PMREMGenerator(renderer); scene.environment=pmrem.fromEquirectangular(envTex()).texture; scene.environmentIntensity=1.0;
+const sun=new THREE.DirectionalLight(0xfff1da,2.8); sun.position.set(9,15,6); sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048); sun.shadow.radius=4; sun.shadow.bias=-0.0004;
+const sc=sun.shadow.camera; sc.left=-24;sc.right=24;sc.top=24;sc.bottom=-24;sc.near=0.1;sc.far=80; scene.add(sun);
+scene.add(new THREE.HemisphereLight(0xe4ecff,0x4d4636,0.62));
+
+const { root, bounds, counts }=makeVoxels(vox);
+const minX=bounds.mnx,maxX=bounds.mxx,minZ=bounds.mnz,maxZ=bounds.mxz,maxY=bounds.mxy;
+const cxx=(minX+maxX)/2, czz=(minZ+maxZ)/2;
+root.position.set(-cxx,0,-czz);
+const grp=new THREE.Group(); grp.add(root); scene.add(grp);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(160,160),new THREE.ShadowMaterial({opacity:0.28}));
+floor.rotation.x=-Math.PI/2; floor.position.y=-3.5; floor.receiveShadow=true; scene.add(floor);
+
+const span=Math.max(maxX-minX,maxZ-minZ,maxY)*0.78+2, asp=innerWidth/innerHeight;
+const cam=new THREE.OrthographicCamera(-span*asp,span*asp,span,-span,0.1,300);
+cam.position.set(20,16,20); cam.lookAt(0,maxY*0.32,0); cam.updateProjectionMatrix();
+document.getElementById('hud').textContent=`${BLD}  ·  ${vox.length} voxels  ·  ${maxX-minX+1}×${maxY+1}×${maxZ-minZ+1}`;
+let t=0;(function loop(){requestAnimationFrame(loop);if(P.get('spin')==='1'){t+=0.005;grp.rotation.y=t;}renderer.render(scene,cam);})();
+addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);const a=innerWidth/innerHeight;cam.left=-span*a;cam.right=span*a;cam.updateProjectionMatrix();});
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portfolio — Andy Ye</title>
+<title>CV — Andy Ye</title>
 <link rel="icon" type="image/png" href="/favicon.png">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -21,12 +21,11 @@
   nav.bar a:hover { text-decoration: underline; }
   nav.bar .here { font-weight: 700; }
 
-  main { max-width: 720px; margin: 0 auto; padding: 2.5rem 1.4rem 4rem; }
-  .dir { list-style: none; }
-  .dir li { padding: .9rem 0; border-bottom: 1px solid #eeeae2; }
-  .dir a.title { font-size: 1.2rem; font-weight: 700; text-decoration: none; }
-  .dir a.title:hover { text-decoration: underline; }
-  .dir .about { color: #6b665d; font-size: .95rem; }
+  main { max-width: 900px; margin: 0 auto; padding: 2rem 1.4rem 3.5rem; }
+  .dl { font-size: .95rem; margin-bottom: 1rem; }
+  .dl span { color: #ccc8c0; }
+  .pdf { display: block; width: 100%; height: calc(100vh - 300px); min-height: 620px;
+    background: #fff; border: 1px solid #ccc8c0; }
 
   footer { text-align: center; padding: 0 1rem 3rem; font-family: 'Courier New', Courier, monospace;
     color: #b5afa4; font-size: .8rem; }
@@ -45,26 +44,14 @@
     <li><a href="/">home</a></li>
     <li><a href="/blog-archive">blog</a></li>
     <li><a href="/cs">projects/research</a></li>
-    <li><a class="here" href="/creative">creative</a></li>
-    <li><a href="/cv">cv</a></li>
+    <li><a href="/creative">creative</a></li>
+    <li><a class="here" href="/cv">cv</a></li>
   </ul>
 </nav>
 
 <main>
-  <ul class="dir">
-    <li>
-      <a class="title" href="/creative/art">oil painting</a>
-      <div class="about">landscapes, boats, and some abstract pieces. I haven't painted more since high school.</div>
-    </li>
-    <li>
-      <a class="title" href="/creative/music">music</a>
-      <div class="about">some compositions.</div>
-    </li>
-    <li>
-      <a class="title" href="/creative/games">card games</a>
-      <div class="about">printed and playtested tabletop games, with rules and PDFs.</div>
-    </li>
-  </ul>
+  <p class="dl">[<a href="/Pages/Materials/Resume_June_28.pdf" download="Andy_Ye_CV.pdf">download pdf</a>]</p>
+  <iframe class="pdf" src="/Pages/Materials/Resume_June_28.pdf" title="Andy Ye — CV"></iframe>
 </main>
 
 <footer>© 2026 andy ye · seattle, wa</footer>
