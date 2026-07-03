@@ -60,6 +60,9 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 
+/* phones get the standard site directly — the 3D lobby + on-monitor browsing is a desktop experience */
+if (matchMedia('(max-width: 768px)').matches){ window.location.replace('/site'); throw new Error('redirecting to /site'); }
+
 /* ====================== boot script / state ====================== */
 const SCRIPT=[
   {t:'line', s:'> welcome'},
@@ -661,7 +664,7 @@ function choose(which){
     //    meanwhile, and gets revealed ON the screen (with CRT fx) the moment the zoom lands. ──
     transition={which,t:0,t0:performance.now()};
     state='loading'; bootP=0; _bootSeg=-1;
-    if(!siteFrame.src){ siteFrame.src='/'; siteFrame.addEventListener('load',()=>siteFrame.classList.add('ld'),{once:true}); }
+    if(!siteFrame.src){ siteFrame.src='/site'; siteFrame.addEventListener('load',()=>siteFrame.classList.add('ld'),{once:true}); }
     return;
   }
   transition={which,t:0};

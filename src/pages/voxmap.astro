@@ -624,7 +624,7 @@ const CONTENT = {
   research2:     { title:'ubiquitous computing', url:'/cs/research/ubicomp' },
   resumeBuilding:{ title:'resume',     url:'/Pages/Materials/Resume_June_28.pdf' },
   transcript:    { title:'transcript', url:'/Pages/Materials/Transcripts/Aye_transcript_soph.pdf' },
-  infobuilding:  { title:'about me', url:'/' },   // the pastel-green folder shows the real homepage
+  infobuilding:  { title:'about me', url:'/site' },   // the pastel-green folder shows the real homepage
 };
 const panel = document.getElementById('panel');
 const pbody = panel.querySelector('.pbody');
@@ -659,7 +659,7 @@ function overRaft(){ return Math.hypot(hitPt.x - RAFT_W.x, hitPt.z - RAFT_W.z) <
 function goToMonitor(){ if (_leaving) return; _leaving = true;
   document.getElementById('fade').classList.add('on');
   tweenTo(cur.t.clone(), cur.span * 1.22);                        // gentle pull-back while the room fades in
-  setTimeout(() => { window.location.href = '/crt3d'; }, 520); }
+  setTimeout(() => { window.location.href = '/'; }, 520); }
 
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), hitPt = new THREE.Vector3();
 const groundPlane = new THREE.Plane(new THREE.Vector3(0,1,0), 0);
