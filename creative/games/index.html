@@ -71,23 +71,23 @@
     <h3>Space Marines</h3><span class="date">august 2025</span>
     <div class="links">[<a href="/card_games/space_marines_08-25/space_marines.pdf" target="_blank">cards pdf</a>] <span>·</span> [<a href="/card_games/space_marines_08-25/space_marines_rules_early.pdf" target="_blank">rules pdf</a>]</div>
     <div class="imgs">
-      <img src="/card_games/space_marines_08-25/space_marines_1.jpg" alt="Space Marines" onclick="openLB(this)">
-      <img src="/card_games/space_marines_08-25/space_marines_2.jpg" alt="Space Marines 2" onclick="openLB(this)">
+      <img src="/card_games/thumbs/space_marines_1.jpg" data-full="/card_games/space_marines_08-25/space_marines_1.jpg" alt="Space Marines" onclick="openLB(this)">
+      <img src="/card_games/thumbs/space_marines_2.jpg" data-full="/card_games/space_marines_08-25/space_marines_2.jpg" alt="Space Marines 2" onclick="openLB(this)">
     </div>
   </div>
 
   <div class="game">
     <h3>Monty</h3><span class="date">march 2026</span>
     <div class="imgs">
-      <img src="/card_games/monty_03-26/monty_1.jpg" alt="Monty" onclick="openLB(this)">
+      <img src="/card_games/thumbs/monty_1.jpg" data-full="/card_games/monty_03-26/monty_1.jpg" alt="Monty" onclick="openLB(this)">
     </div>
   </div>
 
   <div class="game">
     <h3>Tyranny</h3><span class="date">june 2024</span>
     <div class="imgs">
-      <img src="/card_games/tyranny_06-2024/image0.jpg" alt="Tyranny" onclick="openLB(this)">
-      <img src="/card_games/tyranny_06-2024/image1.jpg" alt="Tyranny 2" onclick="openLB(this)">
+      <img src="/card_games/thumbs/image0.jpg" data-full="/card_games/tyranny_06-2024/image0.jpg" alt="Tyranny" onclick="openLB(this)">
+      <img src="/card_games/thumbs/image1.jpg" data-full="/card_games/tyranny_06-2024/image1.jpg" alt="Tyranny 2" onclick="openLB(this)">
     </div>
   </div>
 
@@ -101,7 +101,7 @@
 
 <div id="lightbox" onclick="closeLB()"><img id="lb-img" src="" alt=""></div>
 <script>
-function openLB(img){ document.getElementById('lb-img').src=img.src; document.getElementById('lightbox').classList.add('active'); }
+function openLB(img){ document.getElementById('lb-img').src=img.dataset.full||img.src; document.getElementById('lightbox').classList.add('active'); }
 function closeLB(){ document.getElementById('lightbox').classList.remove('active'); }
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeLB(); });
 document.querySelectorAll('.imgs img').forEach(img=>{
