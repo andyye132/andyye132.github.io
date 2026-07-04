@@ -82,7 +82,7 @@ setInterval(()=>cursorOn=!cursorOn, 480);
 
 /* ====================== renderer / scene ====================== */
 const canvas=document.getElementById('gl');
-const renderer=new THREE.WebGLRenderer({canvas, antialias:false});   // backbuffer only receives the composer's fullscreen quad — MSAA there is pure cost
+const renderer=new THREE.WebGLRenderer({canvas, antialias:false, powerPreference:'high-performance'});   // backbuffer only receives the composer's fullscreen quad — MSAA there is pure cost
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping=THREE.NeutralToneMapping;   // truer beige/wood hues than ACES
@@ -681,12 +681,35 @@ document.getElementById('mute').addEventListener('click', ()=>{ muted=!muted; do
 
 /* ====================== loop ====================== */
 let clock=0; const _skip=new THREE.Vector3();
-function resize(){ renderer.setSize(innerWidth,innerHeight); composer.setSize(innerWidth,innerHeight);
-  camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); bloom.resolution.set(innerWidth,innerHeight);
+/* ── adaptive quality: weak GPUs step the render density down until frames are smooth (film grain
+      hides it). Sticky per session; `?q=0.7` forces a tier. Floor tier also drops the god rays. ── */
+const QSTEPS=[1,0.85,0.7,0.55];
+const _qForce=parseFloat(new URLSearchParams(location.search).get('q'));
+let _qi=QSTEPS.indexOf(_qForce>=0?_qForce:parseFloat(sessionStorage.getItem('crtQ')));
+if(_qi<0)_qi=0;
+function resize(){
+  const pr=Math.min(devicePixelRatio,2)*QSTEPS[_qi];
+  renderer.setPixelRatio(pr); renderer.setSize(innerWidth,innerHeight);
+  composer.setPixelRatio(pr); composer.setSize(innerWidth,innerHeight);
+  camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
   pixelPass.uniforms.resolution.value.set(innerWidth,innerHeight);
+  godrays.enabled=_qi<QSTEPS.length-1;
   if(siteScreen.classList.contains('on')){ camera.updateMatrixWorld(); placeSiteScreen(); } }
 addEventListener('resize', resize);
+let _qWarm=0; const _qBuf=[]; let _qLast=performance.now();
+function qualityTick(){
+  const now=performance.now(), dt=now-_qLast; _qLast=now;
+  if(dt>250 || _qi>=QSTEPS.length-1 || !isNaN(_qForce)) return;
+  if(++_qWarm<180) return;
+  _qBuf.push(dt);
+  if(_qBuf.length>=90){ _qBuf.sort((a,b)=>a-b); const med=_qBuf[45]; _qBuf.length=0;
+    if(med>22){ _qi++; sessionStorage.setItem('crtQ', String(QSTEPS[_qi])); resize(); _qWarm=120; } } }
+let _frameNo=0;
 function animate(ts){
+  _frameNo++;
+  const _siteOpen = transition && transition.which==='screen' && transition.shown;
+  if(_siteOpen && (_frameNo & 1)){ _qLast=performance.now(); requestAnimationFrame(animate); return; }   // browsing on the monitor → room idles at half rate
+  if(!_siteOpen) qualityTick();
   clock+=0.016;
   let baseX=mx*0.8, baseY=0.7-my*0.45, baseZ=9.4, lookY=0.25, lookZ=0, sway=1, camHard=false;
   if(transition && (transition.which==='screen'||transition.which==='screenOut')){
