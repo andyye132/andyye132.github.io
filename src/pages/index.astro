@@ -60,8 +60,19 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 
+/* the address bar follows the page on the monitor (/#/cs/research/robotics/bristle); this reads it back:
+   the same-origin site path named by the URL hash, or null */
+function hashPath(){
+  try{
+    const h=decodeURIComponent(location.hash.slice(1));
+    if(!h.startsWith('/')) return null;
+    const u=new URL(h, location.origin);
+    return u.origin===location.origin && u.pathname!=='/' ? u.pathname+u.search : null;   // never another site, never the lobby inside itself
+  }catch(e){ return null; }
+}
+
 /* phones get the standard site directly — the 3D lobby + on-monitor browsing is a desktop experience */
-if (matchMedia('(max-width: 768px)').matches){ window.location.replace('/site'); throw new Error('redirecting to /site'); }
+if (matchMedia('(max-width: 768px)').matches){ window.location.replace(hashPath()||'/site'); throw new Error('redirecting to the standard site'); }
 
 /* ====================== boot script / state ====================== */
 const SCRIPT=[
@@ -246,17 +257,20 @@ const plasterMat=surface({color:0xe4dcd4, roughness:0.96, envMapIntensity:0.80, 
 const winFrameMat=surface({color:0xe7dccb, roughness:0.55, envMapIntensity:1.0, normalScale:0.08, emissive:0xfff0dc, emissiveIntensity:0}); // casing (glows on window hover)
 
 /* ====================== screen canvas (terminal) ====================== */
-const sc=document.createElement('canvas'); sc.width=1024; sc.height=768;
+/* the visible CRT screen, in monitor-local units — the shell, bezel, glass, terminal canvas and the
+   on-monitor site rect all derive from it, so widening the monitor is this one number */
+const SCR={ w:3.8, h:2.38, y:0.12, z:1.31 };
+const sc=document.createElement('canvas'); sc.height=768; sc.width=Math.round(sc.height*SCR.w/SCR.h);
 const sx=sc.getContext('2d');
 const screenTex=new THREE.CanvasTexture(sc); screenTex.colorSpace=THREE.SRGBColorSpace;
 function drawStatic(amt){
-  const n=Math.floor(amt*1400); sx.save(); sx.globalAlpha=0.5;
-  for(let k=0;k<n;k++){ const v=Math.random(); sx.fillStyle=v<.5?'#0a1a12':(v<.8?'#16331f':'#2c5a3a'); sx.fillRect(Math.random()*1024,Math.random()*768,3,2); }
+  const n=Math.floor(amt*1400*sc.width/1024); sx.save(); sx.globalAlpha=0.5;
+  for(let k=0;k<n;k++){ const v=Math.random(); sx.fillStyle=v<.5?'#0a1a12':(v<.8?'#16331f':'#2c5a3a'); sx.fillRect(Math.random()*sc.width,Math.random()*sc.height,3,2); }
   sx.restore();
 }
 function clockStr(){ const d=new Date(); let h=d.getHours(); const m=d.getMinutes(); const ap=h<12?'AM':'PM'; h=h%12||12; return h+':'+String(m).padStart(2,'0')+' '+ap; }
 function drawScreen(){
-  const W=1024,H=768;
+  const W=sc.width,H=sc.height;
   sx.fillStyle='#040d08'; sx.fillRect(0,0,W,H);
   const bg=sx.createRadialGradient(W/2,H*0.42,40,W/2,H*0.5,H*0.8);
   bg.addColorStop(0,'rgba(20,60,40,.45)'); bg.addColorStop(1,'rgba(2,8,5,0)'); sx.fillStyle=bg; sx.fillRect(0,0,W,H);
@@ -304,20 +318,21 @@ function drawScreen(){
 
 /* ====================== geometry ====================== */
 const mon=new THREE.Group(); scene.add(mon);
-const body=new THREE.Mesh(pillowBox(4.0,3.2,2.5, 12, 0.34, 0.17), beige); mon.add(body);
-const frame=new THREE.Mesh(roundedRectGeo(3.36,2.56,0.17), frameMat); frame.position.set(0,0.12,1.30); mon.add(frame);
+const BODY_W=SCR.w+0.82;   // shell = screen + bezel + side walls
+const body=new THREE.Mesh(pillowBox(BODY_W,3.2,2.5, 12, 0.34, 0.17), beige); mon.add(body);
+const frame=new THREE.Mesh(roundedRectGeo(SCR.w+0.18,SCR.h+0.18,0.17), frameMat); frame.position.set(0,SCR.y,SCR.z-0.01); mon.add(frame);
 const screenMat=new THREE.MeshBasicMaterial({map:screenTex, fog:false});
-const screen=new THREE.Mesh(roundedRectGeo(3.18,2.38,0.13), screenMat); screen.position.set(0,0.12,1.31); screen.name='screen'; mon.add(screen);
+const screen=new THREE.Mesh(roundedRectGeo(SCR.w,SCR.h,0.13), screenMat); screen.position.set(0,SCR.y,SCR.z); screen.name='screen'; mon.add(screen);
 const glassMat=new THREE.MeshPhysicalMaterial({color:0x0a0a0c, roughness:0.12, metalness:0, transparent:true, opacity:0.14, envMapIntensity:1.4, depthWrite:false, fog:false});
-const glass=new THREE.Mesh(domedRect(3.18,2.38,40,0.15), glassMat); glass.position.set(0,0.12,1.315); mon.add(glass);
+const glass=new THREE.Mesh(domedRect(SCR.w,SCR.h,40,0.15), glassMat); glass.position.set(0,SCR.y,SCR.z+0.005); mon.add(glass);
 /* green hover-glow ring around the screen */
 const screenGlowMat=new THREE.MeshBasicMaterial({color:0x86ffbb, transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending, fog:false});
-const screenGlow=new THREE.Mesh(ringGeo(3.29,2.49, 3.20,2.40, 0.15), screenGlowMat); screenGlow.position.set(0,0.12,1.322); mon.add(screenGlow);  // thin line just outside the screen
+const screenGlow=new THREE.Mesh(ringGeo(SCR.w+0.11,SCR.h+0.11, SCR.w+0.02,SCR.h+0.02, 0.15), screenGlowMat); screenGlow.position.set(0,SCR.y,SCR.z+0.012); mon.add(screenGlow);  // thin line just outside the screen
 /* ANDY YE brand label, bottom-right bezel */
 const label=new THREE.Mesh(new THREE.PlaneGeometry(0.92,0.25), new THREE.MeshBasicMaterial({map:makeLabel('ANDY YE'), transparent:true, depthWrite:false, fog:true}));
-label.position.set(1.02,-1.34,1.27); mon.add(label);
+label.position.set(BODY_W/2-0.98,-1.34,1.27); mon.add(label);
 const neck=new THREE.Mesh(pillowBox(0.95,0.6,0.95, 8, 0.16, 0.1), beigeDark); neck.position.set(0,-1.86,-0.1); mon.add(neck);
-const base=new THREE.Mesh(pillowBox(2.9,0.3,2.05, 10, 0.12, 0.08), beige); base.position.set(0,-2.16,0.05); mon.add(base);
+const base=new THREE.Mesh(pillowBox(SCR.w-0.28,0.3,2.05, 10, 0.12, 0.08), beige); base.position.set(0,-2.16,0.05); mon.add(base);
 mon.position.set(0,0.35,0);
 
 /* wood table (real top with a front edge) + contact shadow */
@@ -326,7 +341,7 @@ desk.position.set(0,-2.26,4.6); scene.add(desk);     // shallow depth; back edge
 const shadowCv=document.createElement('canvas'); shadowCv.width=shadowCv.height=256;
 { const c=shadowCv.getContext('2d'); const g=c.createRadialGradient(128,128,8,128,128,128);
   g.addColorStop(0,'rgba(0,0,0,.5)'); g.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=g; c.fillRect(0,0,256,256); }
-const contact=new THREE.Mesh(new THREE.PlaneGeometry(6.5,4.6),
+const contact=new THREE.Mesh(new THREE.PlaneGeometry(BODY_W+2.5,4.6),
   new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(shadowCv), transparent:true, depthWrite:false, fog:false}));
 contact.rotation.x=-Math.PI/2; contact.position.set(0,-1.95,0.1); scene.add(contact);
 
@@ -632,11 +647,11 @@ addEventListener('pointermove', e=>{ mx=(e.clientX/innerWidth)*2-1; my=(e.client
   if(state==='ready'){ const t=pick(e); document.body.style.cursor=t?'pointer':'default'; setFocus(t||'none'); }
   else setFocus('none');
 });
-let transition=null, bootP=0, _bootSeg=-1, _revealNow=false;
+let transition=null, bootP=0, _bootSeg=-1, _revealNow=false, _replace=false;
 const siteScreen=document.getElementById('siteScreen'), siteFrame=document.getElementById('siteFrame');
 const _sc1=new THREE.Vector3();
-function screenRectPx(){   // projected px rect of the CRT screen quad (mon y=0.35 + screen local (0,0.12,1.31), 3.18×2.38)
-  const cy=0.47, cz=1.31, hw=1.59, hh=1.19;
+function screenRectPx(){   // projected px rect of the CRT screen quad (monitor group + screen-local SCR)
+  const cy=mon.position.y+SCR.y, cz=SCR.z, hw=SCR.w/2, hh=SCR.h/2;
   let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9;
   for(const [sx,sy] of [[-1,-1],[1,-1],[1,1],[-1,1]]){
     _sc1.set(sx*hw, cy+sy*hh, cz).project(camera);
@@ -649,13 +664,40 @@ function placeSiteScreen(){
   const r=screenRectPx();
   siteScreen.style.left=r.x+'px'; siteScreen.style.top=r.y+'px';
   siteScreen.style.width=r.w+'px'; siteScreen.style.height=r.h+'px';
-  siteScreen.style.borderRadius=(r.w*0.042)+'px';   // matches the rounded screen geo
+  siteScreen.style.borderRadius=(r.w*0.13/SCR.w)+'px';   // matches the rounded screen geo
 }
-function showSiteScreen(){ placeSiteScreen(); siteScreen.classList.add('on'); }
+/* camera z when zoomed onto the screen: it fills ~80% of the view height, and on a narrow window the
+   camera backs off until the full screen width fits */
+function zoomZ(){
+  const t=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
+  return SCR.z+Math.max(4.69, (SCR.w/0.9)/(2*t*camera.aspect));
+}
+const LOBBY_TITLE=document.title;
+function syncAddress(){   // mirror the page on the monitor into the address bar + tab title
+  let loc, title;
+  try{ loc=siteFrame.contentWindow.location; if(loc.origin!==location.origin) return; title=siteFrame.contentDocument.title; }
+  catch(e){ return; }   // a page from another site is on the monitor: leave the address alone
+  history.replaceState(null,'',location.pathname+location.search+'#'+loc.pathname+loc.search);
+  document.title=title||LOBBY_TITLE;
+}
+siteFrame.addEventListener('load', ()=>{ if(transition && transition.which==='screen') syncAddress(); });
+function showSiteScreen(){ placeSiteScreen(); siteScreen.classList.add('on'); syncAddress(); }
 function exitScreen(){   // click the room around the screen → step back out to the lobby
   siteScreen.classList.remove('on'); bootP=0; _bootSeg=-1; state='done';
   transition={which:'screenOut', t:0, t0:performance.now()};
+  history.replaceState(null,'',location.pathname+location.search); document.title=LOBBY_TITLE;
 }
+function openDeepLink(){   // the URL names a page: skip the boot text and go straight onto the monitor
+  if(state==='loading'||state==='done') return;
+  if(state!=='ready'){ skipped=true; fillAll(); }
+  choose('screen');
+}
+addEventListener('hashchange', ()=>{   // hash edited by hand, or history moved between hashes
+  const p=hashPath(); if(!p) return;
+  let cur=null; try{ const l=siteFrame.contentWindow.location; cur=l.pathname+l.search; }catch(e){}
+  if(siteFrame.src && cur!==p) siteFrame.contentWindow.location.replace(p);
+  openDeepLink();
+});
 function choose(which){
   if(state!=='ready') return; state='done'; document.getElementById('hint').style.opacity='0';
   const xf=document.getElementById('xfade'), xl=document.getElementById('xlabel');
@@ -664,7 +706,7 @@ function choose(which){
     //    meanwhile, and gets revealed ON the screen (with CRT fx) the moment the zoom lands. ──
     transition={which,t:0,t0:performance.now()};
     state='loading'; bootP=0; _bootSeg=-1;
-    if(!siteFrame.src){ siteFrame.src='/site'; siteFrame.addEventListener('load',()=>siteFrame.classList.add('ld'),{once:true}); }
+    if(!siteFrame.src){ siteFrame.src=hashPath()||'/site'; siteFrame.addEventListener('load',()=>siteFrame.classList.add('ld'),{once:true}); }
     return;
   }
   transition={which,t:0};
@@ -694,7 +736,7 @@ function resize(){
   camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
   pixelPass.uniforms.resolution.value.set(innerWidth,innerHeight);
   godrays.enabled=_qi<QSTEPS.length-1;
-  if(siteScreen.classList.contains('on')){ camera.updateMatrixWorld(); placeSiteScreen(); } }
+  _replace=true; }   // the zoom distance depends on the aspect — re-pin the site rect once the camera has moved
 addEventListener('resize', resize);
 let _qWarm=0; const _qBuf=[]; let _qLast=performance.now();
 function qualityTick(){
@@ -717,8 +759,8 @@ function animate(ts){
     const out = transition.which==='screenOut';
     transition.t=Math.min(1,(performance.now()-transition.t0)/(out?900:1500));
     let e=transition.t*transition.t*(3-2*transition.t); if(out) e=1-e;
-    baseZ=9.4-(9.4-6.0)*e; baseX*=(1-e); baseY=(0.7-my*0.45)*(1-e)+0.44*e;   // z 6.0 → the screen reads larger
-    lookY=0.25+(0.44-0.25)*e; lookZ=1.31*e; sway=1-e; camHard=true;   // camera driven exactly → the iframe rect lands pixel-true
+    baseZ=9.4-(9.4-zoomZ())*e; baseX*=(1-e); baseY=(0.7-my*0.45)*(1-e)+0.44*e;   // z ≈6.0 → the screen reads larger
+    lookY=0.25+(0.44-0.25)*e; lookZ=SCR.z*e; sway=1-e; camHard=true;   // camera driven exactly → the iframe rect lands pixel-true
     if(!out){
       bootP=e;                                                        // the bar fills WITH the zoom — done when fully zoomed
       const seg=Math.floor(e*24); if(seg>_bootSeg){ _bootSeg=seg; playKey(true); }   // soft tick per bar segment
@@ -731,6 +773,7 @@ function animate(ts){
   else { camera.position.x+=(baseX-camera.position.x)*0.06; camera.position.y+=(baseY-camera.position.y)*0.06; camera.position.z+=(baseZ-camera.position.z)*0.06; }
   camera.lookAt(0,lookY,lookZ);
   if(_revealNow){ _revealNow=false; camera.updateMatrixWorld(); showSiteScreen(); }
+  else if(_replace){ _replace=false; if(siteScreen.classList.contains('on')){ camera.updateMatrixWorld(); placeSiteScreen(); } }
   updateGodrays(); godrays.uniforms.uTime.value=clock;
   // hover focus lerp
   for(const k in tgt) cur[k]+=(tgt[k]-cur[k])*0.1;
@@ -749,7 +792,7 @@ function animate(ts){
   for(let i=0;i<gd.length;i+=4){ const v=Math.random()*255; gd[i]=gd[i+1]=gd[i+2]=v; gd[i+3]=255; }
   gx.putImageData(id,0,0);
   document.getElementById('grain').style.backgroundImage=`url(${gc.toDataURL()})`; }
-(async()=>{ try{ await document.fonts.ready; }catch(e){} resize(); requestAnimationFrame(animate); })();
+(async()=>{ try{ await document.fonts.ready; }catch(e){} resize(); requestAnimationFrame(animate); if(hashPath()) openDeepLink(); })();
 </script>
 </body>
 </html>

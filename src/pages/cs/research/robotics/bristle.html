@@ -21,7 +21,9 @@
   nav.bar a:hover { text-decoration: underline; }
   nav.bar .here { font-weight: 700; }
 
-  main { max-width: 780px; margin: 0 auto; padding: 2.5rem 1.4rem 4rem; }
+  /* text keeps the usual 780px column; the explorer is a wide figure that may use up to 1080px */
+  main { max-width: calc(1080px + 2.8rem); margin: 0 auto; padding: 2.5rem 1.4rem 4rem; }
+  main > :not(.explorer) { max-width: calc(780px - 2.8rem); margin-left: auto; margin-right: auto; }
   .crumb { font-size: .9rem; margin-bottom: 1rem; }
   h2.title { font-size: 1.55rem; line-height: 1.35; margin-bottom: .3rem; }
   .sub { font-style: italic; color: #8d887e; margin-bottom: .8rem; }
@@ -34,8 +36,8 @@
 
   .vidwrap { background: #fff; border: 1px solid #ccc8c0; padding: 4px; margin: 1.2rem 0; }
   .vidwrap video { display: block; width: 100%; background: #000; }
-  .explorer { background: #fff; border: 1px solid #ccc8c0; padding: 4px; margin: 1.2rem 0; }
-  .explorer iframe { display: block; width: 100%; height: 720px; border: 0; background: #0f0f0f; }
+  .explorer { margin: 1.2rem 0; }
+  .explorer iframe { display: block; width: 100%; height: 720px; border: 0; background: #fbfaf6; }
   .cap { font-family: 'Courier New', Courier, monospace; color: #a19b90; font-size: .8rem;
     font-style: italic; text-align: center; margin-top: .35rem; }
 
@@ -65,7 +67,7 @@
 <main>
   <p class="crumb"><a href="/cs/research/robotics">&larr; robotics</a></p>
   <h2 class="title">Bristle: A Filtering Pipeline for Real Life Household CV Navigation</h2>
-  <p class="sub">Allen Institute for AI (Ai2) · with Matt Wallingford · Oct 2025 — Present</p>
+  <p class="sub">Allen Institute for AI (Ai2) · with Matt Wallingford · Oct 2025 — April 2026</p>
   <p class="links">
     demo: <a href="https://andyye.bio/bristle" target="_blank">andyye.bio/bristle</a><br>
     data: <a href="https://huggingface.co/datasets/andyye132/bristle-trajectories" target="_blank">huggingface.co/datasets/andyye132/bristle-trajectories</a>
@@ -101,6 +103,14 @@
 </main>
 
 <footer>© 2026 andy ye · seattle, wa</footer>
+
+<script>
+  // the explorer reports its content height, so the frame fits it with no inner scrollbar
+  window.addEventListener('message', (e) => {
+    const frame = document.querySelector('.explorer iframe');
+    if (e.source === frame.contentWindow && e.data && e.data.bristleHeight > 0) frame.style.height = e.data.bristleHeight + 'px';
+  });
+</script>
 
 </body>
 </html>
